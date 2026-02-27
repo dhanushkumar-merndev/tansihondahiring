@@ -38,7 +38,9 @@ const Home = () => {
     let result = leads;
     
     // Status filter
-    if (statusFilter !== 'All') {
+    if (statusFilter === 'Interested') {
+      result = result.filter((lead) => lead.status === 'Called' && lead.interested === 'Yes');
+    } else if (statusFilter !== 'All') {
       result = result.filter((lead) => lead.status === statusFilter);
     }
     
@@ -68,7 +70,7 @@ const Home = () => {
     rawLeads: leads // Passing raw leads for chart data
   };
 
-  const tabs = ['All', 'Pending', 'Called', 'Rejected'];
+  const tabs = ['All', 'Pending', 'Called', 'Rejected', 'Interested'];
 
   const [showLeadsMobile, setShowLeadsMobile] = useState(false);
 

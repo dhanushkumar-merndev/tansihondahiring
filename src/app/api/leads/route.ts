@@ -16,10 +16,8 @@ export async function GET() {
 
   try {
     const leads = await getLeads();
-    
     cachedLeads = leads;
     lastFetched = now;
-
     return NextResponse.json(leads);
   } catch (error: any) {
     console.error('Error fetching leads:', error);
@@ -29,18 +27,19 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { rowIndex, status, feedback } = await req.json();
+    const { rowIndex, status, feedback, interested } = await req.json();
 
     if (!rowIndex || !status) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Write status (F), feedback (G), interested (H)
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `CRM!F${rowIndex}:G${rowIndex}`,
+      range: `CRM!F${rowIndex}:H${rowIndex}`,
       valueInputOption: 'RAW',
       requestBody: {
-        values: [[status, feedback]],
+        values: [[status, feedback, interested || '']],
       },
     });
 

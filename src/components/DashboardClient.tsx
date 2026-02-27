@@ -45,7 +45,9 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
     let result = leads;
     
     // Status filter
-    if (statusFilter !== 'All') {
+    if (statusFilter === 'Interested + Called') {
+      result = result.filter((lead) => lead.status === 'Called' && lead.interested === 'Yes');
+    } else if (statusFilter !== 'All') {
       result = result.filter((lead) => lead.status === statusFilter);
     }
     
@@ -75,7 +77,7 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
     rawLeads: leads
   };
 
-  const tabs = ['All', 'Pending', 'Called', 'Rejected'];
+  const tabs = ['All', 'Pending', 'Called', 'Rejected', 'Interested + Called'];
   const [showLeadsMobile, setShowLeadsMobile] = useState(false);
 
   return (

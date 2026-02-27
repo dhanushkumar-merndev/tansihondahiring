@@ -4,7 +4,7 @@ export async function getLeads() {
   try {
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId: SHEET_ID,
-      range: 'CRM!A2:G',
+      range: 'CRM!A2:H',
     });
 
     const rows = response.data.values;
@@ -22,6 +22,7 @@ export async function getLeads() {
       email: row[4] || '',
       status: row[5] || 'Pending',
       feedback: row[6] || '',
+      interested: row[7] || '',
     }));
   } catch (error) {
     console.error('Error fetching leads from library:', error);

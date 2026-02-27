@@ -11,6 +11,7 @@ export interface Lead {
   email: string;
   status: string;
   feedback: string;
+  interested: string;
 }
 
 interface LeadCardProps {
@@ -21,6 +22,7 @@ interface LeadCardProps {
 const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
   const [feedback, setFeedback] = useState(lead.feedback || '');
   const [selectedStatus, setSelectedStatus] = useState(lead.status);
+  const [selectedInterested, setSelectedInterested] = useState(lead.interested || '');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,11 +31,15 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
       setError('Feedback is mandatory');
       return;
     }
-    if (!selectedStatus) {
-      setError('Status is mandatory');
+    if (!selectedStatus || selectedStatus === 'Pending') {
+      setError('Select Called or Reject');
       return;
     }
-    
+    if (!selectedInterested) {
+      setError('Select Interested (Yes or No)');
+      return;
+    }
+
     setError(null);
     setIsSaving(true);
     try {
@@ -44,6 +50,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
           rowIndex: lead.rowIndex,
           status: selectedStatus,
           feedback: feedback,
+          interested: selectedInterested,
         }),
       });
 
@@ -62,9 +69,15 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
 
   const statusColors: { [key: string]: string } = {
     Pending: 'bg-red-50 text-red-600 border-red-100',
-    Called: 'bg-slate-900 text-white border-slate-900',
+    Called: 'bg-white text-red-600 border-red-600',
     Rejected: 'bg-red-600 text-white border-red-600',
   };
+
+  const interestColor = selectedInterested === 'Yes'
+    ? 'bg-emerald-500 text-white border-emerald-500'
+    : selectedInterested === 'No'
+    ? 'bg-slate-300 text-slate-600 border-slate-300'
+    : 'bg-slate-50 text-slate-400 border-slate-200';
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col h-full transition-all hover:shadow-md hover:border-red-200 group">
@@ -73,9 +86,32 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
           <h3 className="text-lg font-black text-slate-900 pb-0.5 leading-tight group-hover:text-red-600 transition-colors uppercase">{lead.full_name}</h3>
           <p className="text-[10px] font-black text-red-600 mt-1.5 uppercase tracking-widest">{lead.position}</p>
         </div>
-        <span className={`flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border transition-colors shadow-sm ${statusColors[lead.status] || 'bg-slate-50 text-slate-600'}`}>
-          {lead.status}
-        </span>
+        <div className="flex flex-col items-end gap-1.5">
+          <span className={`flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border transition-colors shadow-sm ${statusColors[lead.status] || 'bg-slate-50 text-slate-600'}`}>
+            {lead.status}
+          </span>
+          {lead.interested && (
+            <span
+  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border whitespace-nowrap ${
+    lead.interested === 'Yes'
+      ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+      : 'bg-slate-50 text-slate-400 border-slate-100'
+  }`}
+>
+  {lead.interested === 'Yes' ? (
+    <>
+      <span>✓</span>
+      <span>INTERESTED</span>
+    </>
+  ) : (
+    <>
+      <span>✗</span>
+      <span>NOT INTERESTED</span>
+    </>
+  )}
+</span>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2.5 mb-5 text-sm">
@@ -87,7 +123,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
           </div>
           <a href={`tel:${lead.phone}`} className="font-bold text-slate-600 text-xs hover:text-red-600 transition-colors">{lead.phone}</a>
         </div>
-        
+
         <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -103,9 +139,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <div className="flex flex-col">
-            <span className="font-bold text-slate-600 text-xs truncate hover:text-red-600 transition-colors max-w-[150px]">{lead.created_time}</span>
-          </div>
+          <span className="font-bold text-slate-600 text-xs">{lead.created_time}</span>
         </div>
       </div>
 
@@ -113,7 +147,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
         {error && (
           <p className="text-[10px] font-bold text-red-600 uppercase text-center animate-bounce">{error}</p>
         )}
-        
+
         <textarea
           value={feedback}
           onChange={(e) => {
@@ -124,6 +158,27 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
           placeholder="Contact notes (Mandatory)..."
         />
 
+        {/* Interested Toggle */}
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] font-black text-red-600 uppercase tracking-widest shrink-0">Interested?</span>
+          <div className="flex gap-1.5 flex-1">
+            {['Yes', 'No'].map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setSelectedInterested(prev => prev === opt ? '' : opt)}
+                className={`flex-1 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all ${
+                  selectedInterested === opt
+                    ? 'bg-white text-red-600 border-red-500 scale-[1.02] shadow-sm'
+                    : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'
+                }`}
+              >
+                {opt === 'Yes' ? '✓ Yes' : '✗ No'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Called / Reject buttons */}
         <div className="grid grid-cols-2 gap-2">
           {['Called', 'Rejected'].map((status) => (
             <button
@@ -131,7 +186,9 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
               onClick={() => setSelectedStatus(status)}
               className={`py-2 text-[10px] font-black uppercase tracking-widest rounded-xl border transition-all ${
                 selectedStatus === status
-                  ? status === 'Called' ? 'bg-slate-900 text-white border-slate-900 scale-[1.02]' : 'bg-red-600 text-white border-red-600 scale-[1.02]'
+                  ? status === 'Called'
+                    ? 'bg-white text-red-600 border-red-500 scale-[1.02] shadow-sm'
+                    : 'bg-red-600 text-white border-red-600 scale-[1.02] shadow-sm'
                   : 'bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100'
               }`}
             >
@@ -139,7 +196,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
             </button>
           ))}
         </div>
-        
+
         <button
           onClick={handleSave}
           disabled={isSaving}
@@ -154,7 +211,6 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
           )}
           {isSaving ? 'Saving...' : 'Save to Google Sheet'}
         </button>
-
       </div>
     </div>
   );
