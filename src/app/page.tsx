@@ -83,7 +83,7 @@ const Home = () => {
   const [showLeadsMobile, setShowLeadsMobile] = useState(false);
 
   return (
-    <div className="min-h-dvh bg-slate-50 p-3 md:p-8">
+    <div className="min-h-screen bg-slate-50 p-3 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Compact Header */}
         <header className="bg-white rounded-2xl border border-slate-200 p-4 md:px-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
