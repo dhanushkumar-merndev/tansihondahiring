@@ -113,7 +113,7 @@ export default function LoginPage() {
           </form>
 
           <p className="mt-8 text-[10px] font-black text-slate-300 uppercase tracking-widest">
-            © 2026 Tansi Motor Hiring
+            © 2026 Tansi Motors Pvt. Ltd.
           </p>
         </div>
       </div>
