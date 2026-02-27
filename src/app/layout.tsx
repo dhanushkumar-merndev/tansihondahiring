@@ -23,13 +23,13 @@ export const metadata: Metadata = {
     url: "https://tansimotors.netlify.app",
     siteName: "Tansi Honda",
     images: [
-  {
-    url: "/api/og",
-    width: 1200,
-    height: 630,
-    alt: "Tansi Honda Hiring",
-  },
-],
+      {
+        url: "/og-image.jpg", 
+        width: 1200,
+        height: 630,
+        alt: "Tansi Honda Hiring",
+      },
+    ],
     locale: "en_US",
     type: "website",
   },
