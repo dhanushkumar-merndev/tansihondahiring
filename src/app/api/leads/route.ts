@@ -1,34 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sheets, SHEET_ID } from '@/lib/google';
+import { getLeads } from '@/lib/leads';
+
+// Simple in-memory cache
+let cachedLeads: any[] | null = null;
+let lastFetched = 0;
+const CACHE_TTL = 30000; // 30 seconds
 
 export async function GET() {
+  const now = Date.now();
+  
+  if (cachedLeads && (now - lastFetched < CACHE_TTL)) {
+    return NextResponse.json(cachedLeads);
+  }
+
   try {
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId: SHEET_ID,
-      range: 'CRM!A2:G',
-    });
-
-    const rows = response.data.values;
-
-    if (!rows || rows.length === 0) {
-      return NextResponse.json([]);
-    }
-
-    const leads = rows.map((row, index) => ({
-      rowIndex: index + 2, // A2 is zero-indexed row 0 in response, so rowIndex is index + 2
-      created_time: row[0] || '',
-      position: row[1] || '',
-      full_name: row[2] || '',
-      phone: row[3] || '',
-      email: row[4] || '',
-      status: row[5] || 'Pending',
-      feedback: row[6] || '',
-    }));
-
-    // Sort by created_time descending (newest first)
-    leads.sort((a, b) => {
-      return new Date(b.created_time).getTime() - new Date(a.created_time).getTime();
-    });
+    const leads = await getLeads();
+    
+    cachedLeads = leads;
+    lastFetched = now;
 
     return NextResponse.json(leads);
   } catch (error: any) {
@@ -53,6 +43,10 @@ export async function POST(req: NextRequest) {
         values: [[status, feedback]],
       },
     });
+
+    // Invalidate cache on update
+    cachedLeads = null;
+    lastFetched = 0;
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

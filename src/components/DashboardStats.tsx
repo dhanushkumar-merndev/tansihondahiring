@@ -294,8 +294,8 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
         </div>
 
         {/* Chart */}
-        <div style={{ height: 200, marginLeft: -8 }}>
-          <ResponsiveContainer width="100%" height="100%">
+        <div style={{ width: '100%', height: 200, minHeight: 200, overflow: 'hidden', marginLeft: -8 }}>
+          <ResponsiveContainer width="100%" height={200} minWidth={100}>
             {chartType === 'area' ? (
               <AreaChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                 <defs>

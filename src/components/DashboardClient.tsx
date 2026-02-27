@@ -5,12 +5,16 @@ import DashboardStats from '@/components/DashboardStats';
 import LeadCard, { Lead } from '@/components/LeadCard';
 import Image from 'next/image';
 
-const Home = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
+interface DashboardClientProps {
+  initialLeads: Lead[];
+}
+
+const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
+  const [leads, setLeads] = useState<Lead[]>(initialLeads);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Pending');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<string>('');
 
   const fetchLeads = useCallback(async () => {
@@ -29,7 +33,10 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    fetchLeads();
+    // Set initial refresh time
+    setLastRefreshed(new Date().toLocaleTimeString());
+    
+    // Setup interval for subsequent updates
     const interval = setInterval(fetchLeads, 30000);
     return () => clearInterval(interval);
   }, [fetchLeads]);
@@ -65,11 +72,10 @@ const Home = () => {
     pending: leads.filter((l) => l.status === 'Pending').length,
     called: leads.filter((l) => l.status === 'Called').length,
     rejected: leads.filter((l) => l.status === 'Rejected').length,
-    rawLeads: leads // Passing raw leads for chart data
+    rawLeads: leads
   };
 
   const tabs = ['All', 'Pending', 'Called', 'Rejected'];
-
   const [showLeadsMobile, setShowLeadsMobile] = useState(false);
 
   return (
@@ -77,57 +83,32 @@ const Home = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Compact Header */}
         <header className="bg-white rounded-2xl border border-slate-200 p-4 md:px-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-         <div
-  className={`relative flex items-center w-full mb-4 ${
-    showLeadsMobile ? "justify-center" : "justify-start"
-  }`}
->
-  {/* Back Button (Left) */}
-  {showLeadsMobile && (
-    <button
-      onClick={() => setShowLeadsMobile(false)}
-      className="absolute left-0 p-2 sm:hidden bg-slate-50 rounded-xl border border-slate-200"
-    >
-      <svg
-        className="w-4 h-4 text-slate-600"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2.5"
-          d="M15 19l-7-7 7-7"
-        />
-      </svg>
-    </button>
-  )}
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {showLeadsMobile && (
+              <button 
+                onClick={() => setShowLeadsMobile(false)}
+                className="p-2 sm:hidden bg-slate-50 rounded-xl border border-slate-200"
+              >
+                <svg className="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+            )}
+            <div className="w-8 h-8 md:w-10 md:h-10 relative shrink-0">
+                <Image
+                    src="/Tansi.png"
+                    alt="Logo"
+                    fill
+                    className="object-contain"
+                />
+                </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">Tansi Motor</h1>
+              <p className="text-[10px] md:text-xs font-bold text-red-600 uppercase tracking-widest mt-0.5">Hiring Dashboard</p>
+            </div>
+          </div>
 
-  {/* Center Block */}
-  <div className="flex items-center gap-3">
-    <div className="w-12 h-12 md:w-14 md:h-14 relative shrink-0">
-      <Image
-        src="/Tansi.png"
-        alt="Logo"
-        fill
-        className="object-contain"
-      />
-    </div>
-
-    <div className={`text-center mt-1.5`}>
-      <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
-        Tansi Motors
-      </h1>
-      <p className="text-[10px] md:text-xs font-bold text-red-600 uppercase tracking-widest mt-0.5">
-        Hiring Dashboard
-      </p>
-    </div>
-  </div>
-
-</div>
           <div className="flex items-center gap-3 w-full sm:w-auto -mt-4 md:mt-0">
-            {/* Show search only on leads view on mobile, or always on desktop */}
             <div className={`relative flex-1 sm:w-64 max-w-sm`}>
               <input
                 type="text"
@@ -231,4 +212,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default DashboardClient;
