@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import DashboardStats from '@/components/DashboardStats';
-import LeadCard, { Lead } from '@/components/LeadCard';
+
 import Image from 'next/image';
+import LeadCard from './LeadCard';
+import DashboardStats from './DashboardStats';
+import { Lead } from './LeadCard';
 
 interface DashboardClientProps {
   initialLeads: Lead[];

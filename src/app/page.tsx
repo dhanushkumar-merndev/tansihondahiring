@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import DashboardStats from '@/components/DashboardStats';
-import LeadCard, { Lead } from '@/components/LeadCard';
+
 import Image from 'next/image';
+import DashboardStats from '../components/DashboardStats';
+import LeadCard, { Lead } from '../components/LeadCard';
 
 const Home = () => {
   const [leads, setLeads] = useState<Lead[]>([]);

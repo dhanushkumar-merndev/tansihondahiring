@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { sheets, SHEET_ID } from '@/lib/google';
-import { getLeads } from '@/lib/leads';
+import { getLeads } from '../../../lib/leads';
+import { SHEET_ID, sheets } from '../../../lib/google';
 
 // Simple in-memory cache
 let cachedLeads: any[] | null = null;
