@@ -70,13 +70,20 @@ const Home = () => {
     rejected: leads.filter((l) => l.status === 'Rejected').length,
     rawLeads: leads // Passing raw leads for chart data
   };
+  const tabCounts: Record<string, number> = {
+  All: leads.length,
+  Pending: leads.filter((l) => l.status === 'Pending').length,
+  Called: leads.filter((l) => l.status === 'Called').length,
+  Rejected: leads.filter((l) => l.status === 'Rejected').length,
+  Interested: leads.filter((l) => l.status === 'Called' && l.interested === 'Yes').length,
+};
 
   const tabs = ['All', 'Pending', 'Called', 'Rejected', 'Interested'];
 
   const [showLeadsMobile, setShowLeadsMobile] = useState(false);
 
   return (
-    <div className="min-h-screen bg-slate-50 p-3 md:p-8">
+    <div className="min-h-dvh bg-slate-50 p-3 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Compact Header */}
         <header className="bg-white rounded-2xl border border-slate-200 p-4 md:px-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -169,8 +176,9 @@ const Home = () => {
 
         {/* Dashboard View (Stats + Graph) */}
         <div className={showLeadsMobile ? 'hidden sm:block' : 'block'}>
-          <DashboardStats {...stats} />
-          <div className="mt-6 sm:hidden">
+          <div className="-mt-2"> <DashboardStats {...stats} /></div>
+         
+          <div className="mt-4 -mb-4 sm:hidden">
             <button 
               onClick={() => setShowLeadsMobile(true)}
               className="w-full py-4 bg-red-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl"
@@ -187,19 +195,26 @@ const Home = () => {
         <div className={showLeadsMobile ? 'block' : 'hidden sm:block'}>
           {/* Compact Filters */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mb-4">
-            {tabs.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setStatusFilter(tab)}
-                className={`px-5 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap ${
-                  statusFilter === tab
-                    ? 'bg-red-600 text-white shadow-lg shadow-red-100 scale-105'
-                    : 'bg-white text-slate-500 border border-slate-200 hover:border-red-200 hover:bg-red-50/50'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+          {tabs.map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setStatusFilter(tab)}
+              className={`px-5 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap flex items-center gap-2 ${
+                statusFilter === tab
+                  ? 'bg-red-600 text-white shadow-lg shadow-red-100'
+                  : 'bg-white text-slate-500 border border-slate-200 hover:border-red-200 hover:bg-red-50/50'
+              }`}
+            >
+              {tab}
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                statusFilter === tab
+                  ? 'bg-white/20 text-white'
+                  : 'bg-slate-100 text-slate-500'
+              }`}>
+                {tabCounts[tab]}
+              </span>
+            </button>
+          ))}
             <div className="ml-auto text-[11px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
               {filteredLeads.length} Candidates Found
             </div>

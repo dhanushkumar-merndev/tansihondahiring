@@ -13,6 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://tansimotors.netlify.app"),
   title: "Tansi Honda Hiring",
   description: "Internal hiring dashboard for managing Facebook job leads.",
 
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
     siteName: "Tansi Honda",
     images: [
       {
-        url: "/og-image.jpg", // 👈 put your 1200x630 image in public folder
+        url: "/og-image.jpg", 
         width: 1200,
         height: 630,
         alt: "Tansi Honda Hiring",
