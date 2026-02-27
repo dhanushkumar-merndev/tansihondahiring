@@ -32,7 +32,6 @@ body {
   outline: none;
   -webkit-tap-highlight-color: transparent;
 }
-
 button:focus,
 svg:focus,
 div:focus {
