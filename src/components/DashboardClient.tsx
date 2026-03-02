@@ -37,7 +37,7 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
   useEffect(() => {
     // Set initial refresh time
     setLastRefreshed(new Date().toLocaleTimeString());
-    
+
     // Setup interval for subsequent updates
     const interval = setInterval(fetchLeads, 30000);
     return () => clearInterval(interval);
@@ -45,20 +45,30 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
 
   useEffect(() => {
     let result = leads;
-    
+
     // Status filter
     if (statusFilter === 'Interested + Called') {
-      result = result.filter((lead) => lead.status === 'Called' && lead.interested === 'Yes');
-    } else if (statusFilter !== 'All') {
-      result = result.filter((lead) => lead.status === statusFilter);
+      result = result.filter(
+        (lead) => lead.status === 'Called' && lead.interested === 'Yes'
+      );
     }
-    
+    else if (statusFilter === 'In Process') {
+      result = result.filter(
+        (lead) => lead.inprocess === 'Yes'
+      );
+    }
+    else if (statusFilter !== 'All') {
+      result = result.filter(
+        (lead) => lead.status === statusFilter
+      );
+    }
+
     // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (lead) => 
-          lead.full_name.toLowerCase().includes(q) || 
+        (lead) =>
+          lead.full_name.toLowerCase().includes(q) ||
           lead.position.toLowerCase().includes(q) ||
           lead.phone.includes(q) ||
           lead.email.toLowerCase().includes(q)
@@ -67,7 +77,7 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
 
     // Sort by rowIndex ascending (First Come, First Served)
     result = [...result].sort((a, b) => a.rowIndex - b.rowIndex);
-    
+
     setFilteredLeads(result);
   }, [leads, statusFilter, searchQuery]);
 
@@ -76,10 +86,11 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
     pending: leads.filter((l) => l.status === 'Pending').length,
     called: leads.filter((l) => l.status === 'Called').length,
     rejected: leads.filter((l) => l.status === 'Rejected').length,
+    inprocess: leads.filter((l) => l.inprocess === 'Yes').length,
     rawLeads: leads
   };
 
-  const tabs = ['All', 'Pending', 'Called', 'Rejected', 'Interested + Called'];
+  const tabs = ['All', 'Pending', 'Called', 'Rejected', 'Interested + Called', 'In Process'];
   const [showLeadsMobile, setShowLeadsMobile] = useState(false);
 
   return (
@@ -89,7 +100,7 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
         <header className="bg-white rounded-2xl border border-slate-200 p-4 md:px-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3 w-full sm:w-auto">
             {showLeadsMobile && (
-              <button 
+              <button
                 onClick={() => setShowLeadsMobile(false)}
                 className="p-2 sm:hidden bg-slate-50 rounded-xl border border-slate-200"
               >
@@ -99,13 +110,13 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
               </button>
             )}
             <div className="w-8 h-8 md:w-10 md:h-10 relative shrink-0">
-                <Image
-                    src="/Tansi.png"
-                    alt="Logo"
-                    fill
-                    className="object-contain"
-                />
-                </div>
+              <Image
+                src="/Tansi.png"
+                alt="Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
             <div>
               <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">Tansi Motor</h1>
               <p className="text-[10px] md:text-xs font-bold text-red-600 uppercase tracking-widest mt-0.5">Hiring Dashboard</p>
@@ -125,7 +136,7 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="text-right flex-col items-end flex">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter leading-none mb-0.5">Updated</p>
@@ -153,7 +164,7 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
         <div className={showLeadsMobile ? 'hidden sm:block' : 'block'}>
           <DashboardStats {...stats} />
           <div className="mt-6 sm:hidden">
-            <button 
+            <button
               onClick={() => setShowLeadsMobile(true)}
               className="w-full py-4 bg-red-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl"
             >
@@ -173,11 +184,10 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-5 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap ${
-                  statusFilter === tab
-                    ? 'bg-red-600 text-white shadow-lg shadow-red-100 scale-105'
-                    : 'bg-white text-slate-500 border border-slate-200 hover:border-red-200 hover:bg-red-50/50'
-                }`}
+                className={`px-5 py-2 rounded-xl text-xs font-black transition-all whitespace-nowrap ${statusFilter === tab
+                  ? 'bg-red-600 text-white shadow-lg shadow-red-100 scale-105'
+                  : 'bg-white text-slate-500 border border-slate-200 hover:border-red-200 hover:bg-red-50/50'
+                  }`}
               >
                 {tab}
               </button>

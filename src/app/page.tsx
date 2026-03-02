@@ -37,20 +37,30 @@ const Home = () => {
 
   useEffect(() => {
     let result = leads;
-    
+
     // Status filter
     if (statusFilter === 'Interested') {
-      result = result.filter((lead) => lead.status === 'Called' && lead.interested === 'Yes');
-    } else if (statusFilter !== 'All') {
-      result = result.filter((lead) => lead.status === statusFilter);
+      result = result.filter(
+        (lead) => lead.status === 'Called' && lead.interested === 'Yes'
+      );
     }
-    
+    else if (statusFilter === 'In Process') {
+      result = result.filter(
+        (lead) => lead.inprocess === 'Yes'
+      );
+    }
+    else if (statusFilter !== 'All') {
+      result = result.filter(
+        (lead) => lead.status === statusFilter
+      );
+    }
+
     // Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (lead) => 
-          lead.full_name.toLowerCase().includes(q) || 
+        (lead) =>
+          lead.full_name.toLowerCase().includes(q) ||
           lead.position.toLowerCase().includes(q) ||
           lead.phone.includes(q) ||
           lead.email.toLowerCase().includes(q)
@@ -59,7 +69,7 @@ const Home = () => {
 
     // Sort by rowIndex ascending (First Come, First Served)
     result = [...result].sort((a, b) => a.rowIndex - b.rowIndex);
-    
+
     setFilteredLeads(result);
   }, [leads, statusFilter, searchQuery]);
 
@@ -71,14 +81,15 @@ const Home = () => {
     rawLeads: leads // Passing raw leads for chart data
   };
   const tabCounts: Record<string, number> = {
-  All: leads.length,
-  Pending: leads.filter((l) => l.status === 'Pending').length,
-  Called: leads.filter((l) => l.status === 'Called').length,
-  Rejected: leads.filter((l) => l.status === 'Rejected').length,
-  Interested: leads.filter((l) => l.status === 'Called' && l.interested === 'Yes').length,
-};
+    All: leads.length,
+    Pending: leads.filter((l) => l.status === 'Pending').length,
+    Called: leads.filter((l) => l.status === 'Called').length,
+    Rejected: leads.filter((l) => l.status === 'Rejected').length,
+    Interested: leads.filter((l) => l.status === 'Called' && l.interested === 'Yes').length,
+    'In Process': leads.filter((l) => l.inprocess === 'Yes').length,
+  };
 
-  const tabs = ['All', 'Pending', 'Called', 'Rejected', 'Interested'];
+  const tabs = ['All', 'Pending', 'Called', 'Rejected', 'Interested', 'In Process'];
 
   const [showLeadsMobile, setShowLeadsMobile] = useState(false);
 
@@ -87,55 +98,54 @@ const Home = () => {
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Compact Header */}
         <header className="bg-white rounded-2xl border border-slate-200 p-4 md:px-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-         <div
-  className={`relative flex items-center w-full mb-4 ${
-    showLeadsMobile ? "justify-center" : "justify-start"
-  }`}
->
-  {/* Back Button (Left) */}
-  {showLeadsMobile && (
-    <button
-      onClick={() => setShowLeadsMobile(false)}
-      className="absolute left-0 p-2 sm:hidden bg-slate-50 rounded-xl border border-slate-200"
-    >
-      <svg
-        className="w-4 h-4 text-slate-600"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth="2.5"
-          d="M15 19l-7-7 7-7"
-        />
-      </svg>
-    </button>
-  )}
+          <div
+            className={`relative flex items-center w-full mb-4 ${showLeadsMobile ? "justify-center" : "justify-start"
+              }`}
+          >
+            {/* Back Button (Left) */}
+            {showLeadsMobile && (
+              <button
+                onClick={() => setShowLeadsMobile(false)}
+                className="absolute left-0 p-2 sm:hidden bg-slate-50 rounded-xl border border-slate-200"
+              >
+                <svg
+                  className="w-4 h-4 text-slate-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </button>
+            )}
 
-  {/* Center Block */}
-  <div className="flex items-center gap-3">
-    <div className="w-12 h-12 md:w-14 md:h-14 relative shrink-0">
-      <Image
-        src="/Tansi.png"
-        alt="Logo"
-        fill
-        className="object-contain"
-      />
-    </div>
+            {/* Center Block */}
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 md:w-14 md:h-14 relative shrink-0">
+                <Image
+                  src="/Tansi.png"
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                />
+              </div>
 
-    <div className={`text-center mt-1.5`}>
-      <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
-        Tansi Motors
-      </h1>
-      <p className="text-[10px] md:text-xs font-bold text-red-600 uppercase tracking-widest mt-0.5">
-        Hiring Dashboard
-      </p>
-    </div>
-  </div>
+              <div className={`text-center mt-1.5`}>
+                <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight leading-none uppercase">
+                  Tansi Motors
+                </h1>
+                <p className="text-[10px] md:text-xs font-bold text-red-600 uppercase tracking-widest mt-0.5">
+                  Hiring Dashboard
+                </p>
+              </div>
+            </div>
 
-</div>
+          </div>
           <div className="flex items-center gap-3 w-full sm:w-auto -mt-4 md:mt-0">
             {/* Show search only on leads view on mobile, or always on desktop */}
             <div className={`relative flex-1 sm:w-64 max-w-sm`}>
@@ -150,7 +160,7 @@ const Home = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="text-right flex-col items-end flex">
                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter leading-none mb-0.5">Updated</p>
@@ -177,9 +187,9 @@ const Home = () => {
         {/* Dashboard View (Stats + Graph) */}
         <div className={showLeadsMobile ? 'hidden sm:block' : 'block'}>
           <div className="-mt-2"> <DashboardStats {...stats} /></div>
-         
+
           <div className="mt-4 -mb-4 sm:hidden">
-            <button 
+            <button
               onClick={() => setShowLeadsMobile(true)}
               className="w-full py-4 bg-red-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl"
             >
@@ -195,26 +205,24 @@ const Home = () => {
         <div className={showLeadsMobile ? 'block' : 'hidden sm:block'}>
           {/* Compact Filters */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mb-4">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setStatusFilter(tab)}
-              className={`px-5 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap flex items-center gap-2 ${
-                statusFilter === tab
+            {tabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setStatusFilter(tab)}
+                className={`px-5 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap flex items-center gap-2 ${statusFilter === tab
                   ? 'bg-red-600 text-white shadow-lg shadow-red-100'
                   : 'bg-white text-slate-500 border border-slate-200 hover:border-red-200 hover:bg-red-50/50'
-              }`}
-            >
-              {tab}
-              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-                statusFilter === tab
+                  }`}
+              >
+                {tab}
+                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${statusFilter === tab
                   ? 'bg-white/20 text-white'
                   : 'bg-slate-100 text-slate-500'
-              }`}>
-                {tabCounts[tab]}
-              </span>
-            </button>
-          ))}
+                  }`}>
+                  {tabCounts[tab]}
+                </span>
+              </button>
+            ))}
             <div className="ml-auto text-[11px] font-bold text-slate-400 uppercase tracking-widest hidden sm:block">
               {filteredLeads.length} Candidates Found
             </div>

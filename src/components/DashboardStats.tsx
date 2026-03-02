@@ -14,7 +14,7 @@ import {
 } from 'recharts';
 
 const MONTHS: Record<string, number> = {
-  jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
 };
 
 function parseLeadDate(raw: string): Date | null {
@@ -38,7 +38,7 @@ function parseLeadDate(raw: string): Date | null {
 
 // ISO key for sorting: "2026-02-27" — lexicographic sort = chronological
 function toISOKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 // Display label: "27 Feb"
@@ -56,14 +56,15 @@ interface StatsProps {
 }
 
 type FilterType = '7d' | '30d' | '90d' | 'all';
-type CategoryType = 'all' | 'new' | 'called' | 'rejected' | 'interested';
+type CategoryType = 'all' | 'new' | 'called' | 'rejected' | 'interested' | 'inprocess';
 type ChartType = 'line' | 'bar';
 
 const SERIES: { key: CategoryType; label: string; color: string }[] = [
-  { key: 'new',        label: 'New',       color: '#ef4444' },
-  { key: 'called',     label: 'Called',    color: '#0ea5e9' },
-  { key: 'rejected',   label: 'Rejected',  color: '#f59e0b' },
-  { key: 'interested', label: 'Interested',color: '#10b981' },
+  { key: 'new', label: 'New', color: '#ef4444' },
+  { key: 'called', label: 'Called', color: '#0ea5e9' },
+  { key: 'rejected', label: 'Rejected', color: '#f59e0b' },
+  { key: 'interested', label: 'Interested', color: '#10b981' },
+  { key: 'inprocess', label: 'In Process', color: '#b910a0ff' },
 ];
 
 const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected, rawLeads }) => {
@@ -87,12 +88,12 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
   const chartData = React.useMemo(() => {
     const now = new Date();
     let cutoff: Date | null = null;
-    if (filter === '7d')  cutoff = new Date(now.getTime() - 7  * 86400000);
+    if (filter === '7d') cutoff = new Date(now.getTime() - 7 * 86400000);
     if (filter === '30d') cutoff = new Date(now.getTime() - 30 * 86400000);
     if (filter === '90d') cutoff = new Date(now.getTime() - 90 * 86400000);
 
     // Key by ISO string — safe to sort lexicographically
-    const dayMap: Record<string, { new: number; called: number; rejected: number; interested: number }> = {};
+    const dayMap: Record<string, { new: number; called: number; rejected: number; interested: number; inprocess: number }> = {};
 
     rawLeads.forEach(lead => {
       const d = parseLeadDate(lead.created_time);
@@ -100,11 +101,12 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
       if (cutoff && d < cutoff) return;
 
       const key = toISOKey(d);
-      if (!dayMap[key]) dayMap[key] = { new: 0, called: 0, rejected: 0, interested: 0 };
+      if (!dayMap[key]) dayMap[key] = { new: 0, called: 0, rejected: 0, interested: 0, inprocess: 0 };
       dayMap[key].new++;
-      if (lead.status === 'Called')   dayMap[key].called++;
+      if (lead.status === 'Called') dayMap[key].called++;
       if (lead.status === 'Rejected') dayMap[key].rejected++;
-      if (lead.interested === 'Yes')  dayMap[key].interested++;
+      if (lead.interested === 'Yes') dayMap[key].interested++;
+      if (lead.inprocess === 'Yes') dayMap[key].inprocess++;
     });
 
     if (cutoff) {
@@ -115,7 +117,7 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
         const isoKey = toISOKey(d);
         result.push({
           date: toDisplayLabel(isoKey),
-          ...(dayMap[isoKey] || { new: 0, called: 0, rejected: 0, interested: 0 }),
+          ...(dayMap[isoKey] || { new: 0, called: 0, rejected: 0, interested: 0, inprocess: 0 }),
         });
       }
       return result;
@@ -147,17 +149,18 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
   ];
 
   const filterOptions: { label: string; value: FilterType }[] = [
-    { label: '7 Days',   value: '7d'  },
-    { label: '30 Days',  value: '30d' },
-    { label: '90 Days',  value: '90d' },
+    { label: '7 Days', value: '7d' },
+    { label: '30 Days', value: '30d' },
+    { label: '90 Days', value: '90d' },
     { label: 'All Time', value: 'all' },
   ];
   const categoryOptions: { label: string; value: CategoryType }[] = [
-    { label: 'All Lines',  value: 'all'        },
-    { label: 'New Apps',   value: 'new'        },
-    { label: 'Called',     value: 'called'     },
-    { label: 'Rejected',   value: 'rejected'   },
+    { label: 'All Lines', value: 'all' },
+    { label: 'New Application', value: 'new' },
+    { label: 'Called', value: 'called' },
+    { label: 'Rejected', value: 'rejected' },
     { label: 'Interested', value: 'interested' },
+    { label: 'In Process', value: 'inprocess' },
   ];
 
   const activeSeries = category === 'all' ? SERIES : SERIES.filter(s => s.key === category);
@@ -311,9 +314,9 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
                   type: 'bar' as ChartType,
                   icon: (
                     <svg width="13" height="13" viewBox="0 0 24 24">
-                      <rect x="3" y="12" width="4" height="9" rx="1" fill="currentColor"/>
-                      <rect x="10" y="7" width="4" height="14" rx="1" fill="currentColor"/>
-                      <rect x="17" y="3" width="4" height="18" rx="1" fill="currentColor"/>
+                      <rect x="3" y="12" width="4" height="9" rx="1" fill="currentColor" />
+                      <rect x="10" y="7" width="4" height="14" rx="1" fill="currentColor" />
+                      <rect x="17" y="3" width="4" height="18" rx="1" fill="currentColor" />
                     </svg>
                   ),
                 },
@@ -391,7 +394,7 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
                 <YAxis hide allowDecimals={false} />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
                 {activeSeries.map(s => (
-                  <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[3,3,0,0]} maxBarSize={28} />
+                  <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[3, 3, 0, 0]} maxBarSize={28} />
                 ))}
               </BarChart>
             ) : (

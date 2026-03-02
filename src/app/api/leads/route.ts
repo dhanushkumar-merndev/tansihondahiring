@@ -9,7 +9,7 @@ const CACHE_TTL = 30000; // 30 seconds
 
 export async function GET() {
   const now = Date.now();
-  
+
   if (cachedLeads && (now - lastFetched < CACHE_TTL)) {
     return NextResponse.json(cachedLeads);
   }
@@ -27,7 +27,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { rowIndex, status, feedback, interested } = await req.json();
+    const { rowIndex, status, feedback, interested, inprocess } = await req.json();
 
     if (!rowIndex || !status) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -36,10 +36,10 @@ export async function POST(req: NextRequest) {
     // Write status (F), feedback (G), interested (H)
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `CRM!F${rowIndex}:H${rowIndex}`,
+      range: `CRM!F${rowIndex}:I${rowIndex}`,
       valueInputOption: 'RAW',
       requestBody: {
-        values: [[status, feedback, interested || '']],
+        values: [[status, feedback, interested, inprocess || '']],
       },
     });
 
