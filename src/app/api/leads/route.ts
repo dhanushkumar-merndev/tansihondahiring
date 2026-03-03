@@ -27,19 +27,19 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const { rowIndex, status, feedback, interested, inprocess } = await req.json();
+    const { rowIndex, status, feedback, interested, inprocess, updated_time } = await req.json();
 
     if (!rowIndex || !status) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Write status (F), feedback (G), interested (H)
+    // Write status (F), feedback (G), interested (H), inprocess (I), updated_time (J)
     await sheets.spreadsheets.values.update({
       spreadsheetId: SHEET_ID,
-      range: `CRM!F${rowIndex}:I${rowIndex}`,
+      range: `CRM!F${rowIndex}:J${rowIndex}`,
       valueInputOption: 'RAW',
       requestBody: {
-        values: [[status, feedback, interested, inprocess || '']],
+        values: [[status, feedback, interested, inprocess || '', updated_time || '']],
       },
     });
 

@@ -13,7 +13,25 @@ export interface Lead {
   feedback: string;
   interested: string;
   inprocess: string;
+  updated_time?: string;
 }
+
+const formatDate = (date: Date) => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[date.getMonth()];
+  const year = date.getFullYear();
+  
+  let hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'pm' : 'am';
+  
+  hours = hours % 12;
+  hours = hours ? hours : 12; // the hour '0' should be '12'
+  const hoursStr = String(hours).padStart(2, '0');
+  
+  return `${day}-${month}-${year} ${hoursStr}:${minutes} ${ampm}`;
+};
 
 interface LeadCardProps {
   lead: Lead;
@@ -54,6 +72,7 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
           feedback,
           interested: selectedInterested,
           inprocess: inProcess,
+          updated_time: formatDate(new Date()),
         }),
       });
 
@@ -112,18 +131,33 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
       </div>
 
       {/* Contact Info */}
-      <div className="space-y-2.5 mb-5 text-sm">
-        <a href={`tel:${lead.phone}`} className="block font-bold text-slate-600 text-xs hover:text-red-600">
-          📞 {lead.phone}
-        </a>
+     <div className="space-y-2.5 mb-5 text-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+            </svg>
+          </div>
+          <a href={`tel:${lead.phone}`} className="font-bold text-slate-600 text-xs hover:text-red-600 transition-colors">{lead.phone}</a>
+        </div>
 
-        <a href={`mailto:${lead.email}`} className="block font-bold text-slate-600 text-xs hover:text-red-600 truncate">
-          ✉ {lead.email}
-        </a>
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <a href={`mailto:${lead.email}`} className="font-bold text-slate-600 text-xs truncate hover:text-red-600 transition-colors max-w-[150px]">{lead.email}</a>
+        </div>
 
-        <span className="block font-bold text-slate-600 text-xs">
-          📅 {lead.created_time}
-        </span>
+        <div className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <span className="font-bold text-slate-600 text-xs">{lead.created_time}</span>
+        </div>
       </div>
 
       {/* Actions */}
