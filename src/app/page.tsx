@@ -186,7 +186,7 @@ const Home = () => {
 
         {/* Dashboard View (Stats + Graph) */}
         <div className={showLeadsMobile ? 'hidden sm:block' : 'block'}>
-          <div className="-mt-1"> <DashboardStats {...stats} /></div>
+          <div className="-mt-2.5 md:-mt-1"> <DashboardStats {...stats} /></div>
 
           <div className="mt-4 -mb-4 sm:hidden">
             <button
