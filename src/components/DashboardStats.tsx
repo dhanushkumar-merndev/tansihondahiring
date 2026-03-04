@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   LineChart,
   Line,
@@ -11,27 +11,47 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
-import { Download, X, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+} from "recharts";
+import { Download, X, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 
 const MONTHS: Record<string, number> = {
-  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+  jan: 0,
+  feb: 1,
+  mar: 2,
+  apr: 3,
+  may: 4,
+  jun: 5,
+  jul: 6,
+  aug: 7,
+  sep: 8,
+  oct: 9,
+  nov: 10,
+  dec: 11,
 };
 
 function parseLeadDate(raw: string): Date | null {
   if (!raw) return null;
   // Normalize: remove non-breaking spaces, collapse whitespace, trim
-  const cleaned = raw.replace(/\u00a0/g, ' ').replace(/\s+/g, ' ').trim();
+  const cleaned = raw
+    .replace(/\u00a0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
   // No $ anchor — tolerates trailing whitespace or invisible chars from Sheets
   const m = cleaned.match(
-    /^(\d{1,2})-(\w{3})-(\d{4})\s+(\d{1,2}):(\d{2})\s*(am|pm)/i
+    /^(\d{1,2})-(\w{3})-(\d{4})\s+(\d{1,2}):(\d{2})\s*(am|pm)/i,
   );
   if (m) {
     let [, d, mon, y, h, min, ap] = m;
     let hh = parseInt(h);
-    if (ap.toLowerCase() === 'pm' && hh !== 12) hh += 12;
-    if (ap.toLowerCase() === 'am' && hh === 12) hh = 0;
-    return new Date(parseInt(y), MONTHS[mon.toLowerCase()] ?? 0, parseInt(d), hh, parseInt(min));
+    if (ap.toLowerCase() === "pm" && hh !== 12) hh += 12;
+    if (ap.toLowerCase() === "am" && hh === 12) hh = 0;
+    return new Date(
+      parseInt(y),
+      MONTHS[mon.toLowerCase()] ?? 0,
+      parseInt(d),
+      hh,
+      parseInt(min),
+    );
   }
   const d2 = new Date(raw);
   return isNaN(d2.getTime()) ? null : d2;
@@ -39,36 +59,39 @@ function parseLeadDate(raw: string): Date | null {
 
 // ISO key for sorting: "2026-02-27" — lexicographic sort = chronological
 function toISOKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // Display label: "27 Feb"
 function toDisplayLabel(isoKey: string): string {
-  const [y, mo, d] = isoKey.split('-').map(Number);
-  return new Date(y, mo - 1, d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  const [y, mo, d] = isoKey.split("-").map(Number);
+  return new Date(y, mo - 1, d).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+  });
 }
 
 // Decimal label: "27/02/2026"
 function toFullDecimalDate(isoKey: string): string {
-  const [y, mo, d] = isoKey.split('-').map(Number);
+  const [y, mo, d] = isoKey.split("-").map(Number);
   if (!y || !mo || !d) return isoKey;
-  const day = String(d).padStart(2, '0');
-  const month = String(mo).padStart(2, '0');
+  const day = String(d).padStart(2, "0");
+  const month = String(mo).padStart(2, "0");
   return `${day}/${month}/${y}`;
 }
 
-const CustomCalendar = ({ 
-  startDate, 
+const CustomCalendar = ({
+  startDate,
   endDate,
-  min, 
-  max, 
+  min,
+  max,
   onRangeChange,
-  onClose 
-}: { 
+  onClose,
+}: {
   startDate: string;
   endDate: string;
-  min?: string | null; 
-  max?: string | null; 
+  min?: string | null;
+  max?: string | null;
   onRangeChange: (start: string, end: string) => void;
   onClose: () => void;
 }) => {
@@ -78,11 +101,32 @@ const CustomCalendar = ({
     return new Date();
   });
 
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  const days = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 
-  const firstDayOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
-  const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(
+    viewDate.getFullYear(),
+    viewDate.getMonth(),
+    1,
+  ).getDay();
+  const daysInMonth = new Date(
+    viewDate.getFullYear(),
+    viewDate.getMonth() + 1,
+    0,
+  ).getDate();
   const currentMonthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
 
   const isInRange = (dISO: string) => {
@@ -105,16 +149,16 @@ const CustomCalendar = ({
 
     // Deselection logic
     if (dISO === startDate) {
-      onRangeChange(endDate || '', '');
+      onRangeChange(endDate || "", "");
       return;
     }
     if (dISO === endDate) {
-      onRangeChange(startDate, '');
+      onRangeChange(startDate, "");
       return;
     }
 
     if (!startDate) {
-      onRangeChange(dISO, '');
+      onRangeChange(dISO, "");
     } else if (!endDate) {
       if (dISO < startDate) {
         onRangeChange(dISO, startDate);
@@ -129,8 +173,12 @@ const CustomCalendar = ({
         onRangeChange(startDate, dISO);
       } else {
         // Inside range: find nearest boundary to update
-        const distToStart = Math.abs(new Date(dISO).getTime() - new Date(startDate).getTime());
-        const distToEnd = Math.abs(new Date(dISO).getTime() - new Date(endDate).getTime());
+        const distToStart = Math.abs(
+          new Date(dISO).getTime() - new Date(startDate).getTime(),
+        );
+        const distToEnd = Math.abs(
+          new Date(dISO).getTime() - new Date(endDate).getTime(),
+        );
         if (distToStart < distToEnd) {
           onRangeChange(dISO, endDate);
         } else {
@@ -141,16 +189,28 @@ const CustomCalendar = ({
   };
 
   const changeMonth = (offset: number) => {
-    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1));
+    setViewDate(
+      new Date(viewDate.getFullYear(), viewDate.getMonth() + offset, 1),
+    );
   };
 
   return (
-    <div style={{
-      position: 'absolute', top: 'calc(100% + 12px)', left: '50%', transform: 'translateX(-50%)',
-      zIndex: 100, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 24,
-      boxShadow: '0 20px 48px -12px rgba(0,0,0,0.15)', padding: '24px', width: 320,
-      animation: 'calendarAppear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)'
-    }}>
+    <div
+      style={{
+        position: "absolute",
+        top: "calc(100% + 12px)",
+        left: "50%",
+        transform: "translateX(-50%)",
+        zIndex: 100,
+        background: "#fff",
+        border: "1px solid #e2e8f0",
+        borderRadius: 24,
+        boxShadow: "0 20px 48px -12px rgba(0,0,0,0.15)",
+        padding: "24px",
+        width: 320,
+        animation: "calendarAppear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
+      }}
+    >
       <style>{`
         @keyframes calendarAppear { from { opacity: 0; transform: translateX(-50%) translateY(10px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
         .day-btn { position: relative; z-index: 1; height: 38px; width: 38px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #475569; border: none; background: transparent; cursor: pointer; border-radius: 50%; transition: all 0.2s; }
@@ -161,23 +221,86 @@ const CustomCalendar = ({
         .day-range.start { border-top-left-radius: 50%; border-bottom-left-radius: 50%; left: 4px; }
         .day-range.end { border-top-right-radius: 50%; border-bottom-right-radius: 50%; right: 4px; }
       `}</style>
-      
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-        <button onClick={(e) => { e.stopPropagation(); changeMonth(-1); }} style={{ border: 'none', background: '#f8fafc', borderRadius: 10, padding: 6, cursor: 'pointer', color: '#64748b' }}><ChevronLeft size={16} /></button>
-        <h4 style={{ margin: 0, fontSize: 13, fontWeight: 900, color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 20,
+        }}
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            changeMonth(-1);
+          }}
+          style={{
+            border: "none",
+            background: "#f8fafc",
+            borderRadius: 10,
+            padding: 6,
+            cursor: "pointer",
+            color: "#64748b",
+          }}
+        >
+          <ChevronLeft size={16} />
+        </button>
+        <h4
+          style={{
+            margin: 0,
+            fontSize: 13,
+            fontWeight: 900,
+            color: "#0f172a",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
+        >
           {months[viewDate.getMonth()]} {viewDate.getFullYear()}
         </h4>
-        <button onClick={(e) => { e.stopPropagation(); changeMonth(1); }} style={{ border: 'none', background: '#f8fafc', borderRadius: 10, padding: 6, cursor: 'pointer', color: '#64748b' }}><ChevronRight size={16} /></button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            changeMonth(1);
+          }}
+          style={{
+            border: "none",
+            background: "#f8fafc",
+            borderRadius: 10,
+            padding: 6,
+            cursor: "pointer",
+            color: "#64748b",
+          }}
+        >
+          <ChevronRight size={16} />
+        </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '2px 0' }}>
-        {days.map(d => (
-          <div key={d} style={{ fontSize: 10, fontWeight: 900, color: '#94a3b8', textAlign: 'center', paddingBottom: 12 }}>{d}</div>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          gap: "2px 0",
+        }}
+      >
+        {days.map((d) => (
+          <div
+            key={d}
+            style={{
+              fontSize: 10,
+              fontWeight: 900,
+              color: "#94a3b8",
+              textAlign: "center",
+              paddingBottom: 12,
+            }}
+          >
+            {d}
+          </div>
         ))}
         {Array.from({ length: firstDayOfMonth }).map((_, i) => (
           <div key={`e-${i}`} />
         ))}
-        {currentMonthDays.map(d => {
+        {currentMonthDays.map((d) => {
           const dt = new Date(viewDate.getFullYear(), viewDate.getMonth(), d);
           const dISO = toISOKey(dt);
           const disabled = isDisabled(d);
@@ -186,12 +309,26 @@ const CustomCalendar = ({
           const inRange = isInRange(dISO);
 
           return (
-            <div key={d} style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
-              {inRange && <div className={`day-range ${isStart ? 'start' : ''} ${isEnd ? 'end' : ''}`} />}
+            <div
+              key={d}
+              style={{
+                position: "relative",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              {inRange && (
+                <div
+                  className={`day-range ${isStart ? "start" : ""} ${isEnd ? "end" : ""}`}
+                />
+              )}
               <button
                 disabled={disabled}
-                onClick={(e) => { e.stopPropagation(); handleSelect(d); }}
-                className={`day-btn ${isStart || isEnd ? 'selected' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSelect(d);
+                }}
+                className={`day-btn ${isStart || isEnd ? "selected" : ""}`}
               >
                 {d}
               </button>
@@ -200,10 +337,32 @@ const CustomCalendar = ({
         })}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20, paddingTop: 16, borderTop: '1px solid #f1f5f9' }}>
-        <button 
-          onClick={(e) => { e.stopPropagation(); onClose(); }}
-          style={{ border: 'none', background: '#ef4444', color: '#fff', borderRadius: 10, padding: '8px 20px', fontSize: 11, fontWeight: 900, cursor: 'pointer', textTransform: 'uppercase', letterSpacing: '0.05em' }}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          marginTop: 20,
+          paddingTop: 16,
+          borderTop: "1px solid #f1f5f9",
+        }}
+      >
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          style={{
+            border: "none",
+            background: "#ef4444",
+            color: "#fff",
+            borderRadius: 10,
+            padding: "8px 20px",
+            fontSize: 11,
+            fontWeight: 900,
+            cursor: "pointer",
+            textTransform: "uppercase",
+            letterSpacing: "0.05em",
+          }}
         >
           Done
         </button>
@@ -212,139 +371,80 @@ const CustomCalendar = ({
   );
 };
 
-const MonthView = ({ viewDate, value, min, max, onSelect, onPrev, onNext, showPrev, showNext }: any) => {
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-  
-  const firstDayOfMonth = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay();
-  const daysInMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate();
-  const currentMonthDays = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-
-  const isSelected = (day: number) => {
-    if (!value) return false;
-    const d = new Date(value);
-    return d.getDate() === day && d.getMonth() === viewDate.getMonth() && d.getFullYear() === viewDate.getFullYear();
-  };
-
-  const isDisabled = (day: number) => {
-    const d = new Date(viewDate.getFullYear(), viewDate.getMonth(), day);
-    const dISO = toISOKey(d);
-    if (min && dISO < min) return true;
-    if (max && dISO > max) return true;
-    return false;
-  };
-
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32 }}>
-        {showPrev ? (
-          <button onClick={(e) => { e.stopPropagation(); onPrev(); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#888', padding: 4 }}><ChevronLeft size={20} /></button>
-        ) : <div style={{ width: 28 }} />}
-        
-        <h4 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
-          {months[viewDate.getMonth()]} {viewDate.getFullYear()}
-        </h4>
-
-        {showNext ? (
-          <button onClick={(e) => { e.stopPropagation(); onNext(); }} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#888', padding: 4 }}><ChevronRight size={20} /></button>
-        ) : <div style={{ width: 28 }} />}
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0 }}>
-        {days.map(d => (
-          <div key={d} style={{ fontSize: 13, fontWeight: 600, color: '#444', textAlign: 'center', marginBottom: 16 }}>{d}</div>
-        ))}
-        {Array.from({ length: firstDayOfMonth }).map((_, i) => (
-          <div key={`empty-${i}`} style={{ height: 42 }} />
-        ))}
-        {currentMonthDays.map(d => {
-          const disabled = isDisabled(d);
-          const selected = isSelected(d);
-          return (
-            <button
-              key={d}
-              disabled={disabled}
-              className={`calendar-btn ${selected ? 'selected' : ''}`}
-              onClick={(e) => { e.stopPropagation(); onSelect(d, viewDate); }}
-              style={{
-                border: 'none', height: 42, fontSize: 14, fontWeight: 600,
-                cursor: disabled ? 'not-allowed' : 'pointer',
-                background: 'transparent',
-                color: disabled ? '#2a2a2a' : (selected ? '#fff' : '#888'),
-                transition: 'all 0.1s ease',
-                outline: 'none',
-                zIndex: 1,
-              }}
-            >
-              {d}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
 interface StatsProps {
   total: number;
   pending: number;
-  called: number;
   rejected: number;
+  inprocess: number;
   rawLeads: any[];
 }
 
-type FilterType = '7d' | '30d' | '90d' | 'all';
-type CategoryType = 'all' | 'new' | 'called' | 'rejected' | 'interested' | 'inprocess';
-type ChartType = 'line' | 'bar';
+type FilterType = "7d" | "30d" | "90d" | "all";
+type CategoryType =
+  | "all"
+  | "new"
+  | "called"
+  | "rejected"
+  | "interested"
+  | "inprocess";
+type ChartType = "line" | "bar";
 
 const SERIES: { key: CategoryType; label: string; color: string }[] = [
-  { key: 'new', label: 'New', color: '#ef4444' },
-  { key: 'called', label: 'Called', color: '#0ea5e9' },
-  { key: 'rejected', label: 'Rejected', color: '#f59e0b' },
-  { key: 'interested', label: 'Interested', color: '#10b981' },
-  { key: 'inprocess', label: 'In Process', color: '#b910a0ff' },
+  { key: "new", label: "New", color: "#ef4444" },
+  { key: "rejected", label: "Rejected", color: "#f59e0b" },
+  { key: "interested", label: "Interested", color: "#10b981" },
+  { key: "inprocess", label: "In Process", color: "#b910a0ff" },
 ];
 
-const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected, rawLeads }) => {
-  const [filter, setFilter] = React.useState<FilterType>('30d');
-  const [category, setCategory] = React.useState<CategoryType>('all');
-  const [chartType, setChartType] = React.useState<ChartType>('line');
+const DashboardStats: React.FC<StatsProps> = ({
+  total,
+  pending,
+  rejected,
+  inprocess,
+  rawLeads,
+}) => {
+  const [filter, setFilter] = React.useState<FilterType>("30d");
+  const [category, setCategory] = React.useState<CategoryType>("all");
+  const [chartType, setChartType] = React.useState<ChartType>("line");
   const [categoryOpen, setCategoryOpen] = React.useState(false);
   const [filterOpen, setFilterOpen] = React.useState(false);
   const [showExportModal, setShowExportModal] = React.useState(false);
-  const [exportFrom, setExportFrom] = React.useState('');
-  const [exportTo, setExportTo] = React.useState('');
-  
+  const [exportFrom, setExportFrom] = React.useState("");
+  const [exportTo, setExportTo] = React.useState("");
+
   const [activePicker, setActivePicker] = React.useState(false);
 
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
       // Close active picker if clicking outside
-      if (activePicker && !(e.target as HTMLElement).closest('.custom-date-container')) {
+      if (
+        activePicker &&
+        !(e.target as HTMLElement).closest(".custom-date-container")
+      ) {
         setActivePicker(false);
       }
-      if (!(e.target as HTMLElement).closest('.dropdown-root')) {
+      if (!(e.target as HTMLElement).closest(".dropdown-root")) {
         setCategoryOpen(false);
         setFilterOpen(false);
       }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   const dateRange = React.useMemo(() => {
     if (!rawLeads.length) return { min: null, max: null };
     const dates = rawLeads
-      .map(l => parseLeadDate(l.created_time))
+      .map((l) => parseLeadDate(l.created_time))
       .filter((d): d is Date => d !== null)
       .sort((a, b) => a.getTime() - b.getTime());
-    
+
     if (!dates.length) return { min: null, max: null };
-    return { 
-      min: dates[0], 
+    return {
+      min: dates[0],
       max: dates[dates.length - 1],
       minISO: toISOKey(dates[0]),
-      maxISO: toISOKey(dates[dates.length - 1])
+      maxISO: toISOKey(dates[dates.length - 1]),
     };
   }, [rawLeads]);
 
@@ -355,37 +455,43 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
     const toDate = new Date(exportTo);
     toDate.setHours(23, 59, 59, 999);
 
-    const filteredLeads = rawLeads.filter(lead => {
+    const filteredLeads = rawLeads.filter((lead) => {
       const d = parseLeadDate(lead.created_time);
       return d && d >= fromDate && d <= toDate;
     });
 
-    const headers = ['created_time', 'position', 'full_name', 'phone', 'email'];
+    const headers = ["created_time", "position", "full_name", "phone", "email"];
     const csvContent = [
-      headers.join(','),
-      ...filteredLeads.map(lead => 
-        headers.map(h => {
-          let val = lead[h] || '';
-          if (h === 'created_time') {
-            const d = parseLeadDate(val);
-            if (d) val = toFullDecimalDate(toISOKey(d));
-          }
-          return `"${val.toString().replace(/"/g, '""')}"`;
-        }).join(',')
-      )
-    ].join('\n');
+      headers.join(","),
+      ...filteredLeads.map((lead) =>
+        headers
+          .map((h) => {
+            let val = lead[h] || "";
+            if (h === "created_time") {
+              const d = parseLeadDate(val);
+              if (d) val = toFullDecimalDate(toISOKey(d));
+            }
+            return `"${val.toString().replace(/"/g, '""')}"`;
+          })
+          .join(","),
+      ),
+    ].join("\n");
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const nowTime = new Date();
-    const timeStr = nowTime.getHours().toString().padStart(2, '0') + 
-                    nowTime.getMinutes().toString().padStart(2, '0') + 
-                    nowTime.getSeconds().toString().padStart(2, '0');
+    const timeStr =
+      nowTime.getHours().toString().padStart(2, "0") +
+      nowTime.getMinutes().toString().padStart(2, "0") +
+      nowTime.getSeconds().toString().padStart(2, "0");
 
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `leads_export_${exportFrom}_to_${exportTo}_${timeStr}.csv`);
-    link.style.visibility = 'hidden';
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `leads_export_${exportFrom}_to_${exportTo}_${timeStr}.csv`,
+    );
+    link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -395,21 +501,37 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
   const chartData = React.useMemo(() => {
     const now = new Date();
     let cutoff: Date | null = null;
-    if (filter === '7d') cutoff = new Date(now.getTime() - 7 * 86400000);
-    if (filter === '30d') cutoff = new Date(now.getTime() - 30 * 86400000);
-    if (filter === '90d') cutoff = new Date(now.getTime() - 90 * 86400000);
+    if (filter === "7d") cutoff = new Date(now.getTime() - 7 * 86400000);
+    if (filter === "30d") cutoff = new Date(now.getTime() - 30 * 86400000);
+    if (filter === "90d") cutoff = new Date(now.getTime() - 90 * 86400000);
 
     // Key by ISO string — safe to sort lexicographically
-    const dayMap: Record<string, { new: number; called: number; rejected: number; interested: number; inprocess: number }> = {};
+    const dayMap: Record<
+      string,
+      {
+        new: number;
+        called: number;
+        rejected: number;
+        interested: number;
+        inprocess: number;
+      }
+    > = {};
 
-    rawLeads.forEach(lead => {
+    rawLeads.forEach((lead) => {
       const dc = parseLeadDate(lead.created_time);
       const du = lead.updated_time ? parseLeadDate(lead.updated_time) : null;
 
       // 1. Handle NEW series (ALWAYS uses created_time)
       if (dc && (!cutoff || dc >= cutoff)) {
         const key = toISOKey(dc);
-        if (!dayMap[key]) dayMap[key] = { new: 0, called: 0, rejected: 0, interested: 0, inprocess: 0 };
+        if (!dayMap[key])
+          dayMap[key] = {
+            new: 0,
+            called: 0,
+            rejected: 0,
+            interested: 0,
+            inprocess: 0,
+          };
         dayMap[key].new++;
       }
 
@@ -417,24 +539,39 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
       // These represent active changes made by the user
       if (du && (!cutoff || du >= cutoff)) {
         const key = toISOKey(du);
-        if (!dayMap[key]) dayMap[key] = { new: 0, called: 0, rejected: 0, interested: 0, inprocess: 0 };
-        
-        if (lead.status === 'Called') dayMap[key].called++;
-        if (lead.status === 'Rejected') dayMap[key].rejected++;
-        if (lead.interested === 'Yes') dayMap[key].interested++;
-        if (lead.inprocess === 'Yes') dayMap[key].inprocess++;
+        if (!dayMap[key])
+          dayMap[key] = {
+            new: 0,
+            called: 0,
+            rejected: 0,
+            interested: 0,
+            inprocess: 0,
+          };
+
+        if (lead.status === "Called") dayMap[key].called++;
+        if (lead.status === "Rejected") dayMap[key].rejected++;
+        if (lead.interested === "Yes") dayMap[key].interested++;
+        if (lead.inprocess === "Yes") dayMap[key].inprocess++;
       }
     });
 
     if (cutoff) {
-      const totalDays = Math.ceil((now.getTime() - cutoff.getTime()) / 86400000);
+      const totalDays = Math.ceil(
+        (now.getTime() - cutoff.getTime()) / 86400000,
+      );
       const result: any[] = [];
       for (let i = totalDays; i >= 0; i--) {
         const d = new Date(now.getTime() - i * 86400000);
         const isoKey = toISOKey(d);
         result.push({
           date: toDisplayLabel(isoKey),
-          ...(dayMap[isoKey] || { new: 0, called: 0, rejected: 0, interested: 0, inprocess: 0 }),
+          ...(dayMap[isoKey] || {
+            new: 0,
+            called: 0,
+            rejected: 0,
+            interested: 0,
+            inprocess: 0,
+          }),
         });
       }
       return result;
@@ -448,51 +585,123 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
 
   const stats = [
     {
-      label: 'New Applications', value: total, accent: '#ef4444',
-      iconPath: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+      label: "New Applications",
+      value: total,
+      accent: "#ef4444",
+      iconPath:
+        "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
     },
     {
-      label: 'Awaiting Call', value: pending, accent: '#f59e0b',
-      iconPath: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+      label: "Awaiting Call",
+      value: pending,
+      accent: "#f59e0b",
+      iconPath: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
     },
     {
-      label: 'Called', value: called, accent: '#0ea5e9',
-      iconPath: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z',
+      label: "Rejected",
+      value: rejected,
+      accent: "#ef4444",
+      iconPath:
+        "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z",
     },
     {
-      label: 'Rejected', value: rejected, accent: '#ef4444',
-      iconPath: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
+      label: "In Process",
+      value: inprocess,
+      accent: "#9333ea",
+      iconPath: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
     },
   ];
 
   const filterOptions: { label: string; value: FilterType }[] = [
-    { label: '7 Days', value: '7d' },
-    { label: '30 Days', value: '30d' },
-    { label: '90 Days', value: '90d' },
-    { label: 'All Time', value: 'all' },
+    { label: "7 Days", value: "7d" },
+    { label: "30 Days", value: "30d" },
+    { label: "90 Days", value: "90d" },
+    { label: "All Time", value: "all" },
   ];
   const categoryOptions: { label: string; value: CategoryType }[] = [
-    { label: 'All Lines', value: 'all' },
-    { label: 'New Application', value: 'new' },
-    { label: 'Called', value: 'called' },
-    { label: 'Rejected', value: 'rejected' },
-    { label: 'Interested', value: 'interested' },
-    { label: 'In Process', value: 'inprocess' },
+    { label: "All Lines", value: "all" },
+    { label: "New Application", value: "new" },
+    { label: "Rejected", value: "rejected" },
+    { label: "Interested", value: "interested" },
+    { label: "In Process", value: "inprocess" },
   ];
 
-  const activeSeries = category === 'all' ? SERIES : SERIES.filter(s => s.key === category);
-  const tickInterval = filter === '7d' ? 0 : filter === '30d' ? 4 : filter === '90d' ? 9 : 'preserveStartEnd';
+  const activeSeries =
+    category === "all" ? SERIES : SERIES.filter((s) => s.key === category);
+  const tickInterval =
+    filter === "7d"
+      ? 0
+      : filter === "30d"
+        ? 4
+        : filter === "90d"
+          ? 9
+          : "preserveStartEnd";
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
     return (
-      <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12, padding: '10px 16px', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', outline: 'none' }}>
-        <p style={{ color: '#94a3b8', fontSize: 10, fontWeight: 700, marginBottom: 6, fontFamily: 'monospace', textTransform: 'uppercase' }}>{label}</p>
+      <div
+        style={{
+          background: "#fff",
+          border: "1px solid #e2e8f0",
+          borderRadius: 12,
+          padding: "10px 16px",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
+          outline: "none",
+        }}
+      >
+        <p
+          style={{
+            color: "#94a3b8",
+            fontSize: 10,
+            fontWeight: 700,
+            marginBottom: 6,
+            fontFamily: "monospace",
+            textTransform: "uppercase",
+          }}
+        >
+          {label}
+        </p>
         {payload.map((p: any) => (
-          <div key={p.dataKey} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-            <div style={{ width: 8, height: 8, borderRadius: '50%', background: p.color }} />
-            <span style={{ color: '#64748b', fontSize: 10, fontWeight: 700, fontFamily: 'monospace', textTransform: 'uppercase' }}>{p.dataKey}</span>
-            <span style={{ color: p.color, fontSize: 16, fontWeight: 900, fontFamily: 'monospace', marginLeft: 4 }}>{p.value}</span>
+          <div
+            key={p.dataKey}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              marginBottom: 2,
+            }}
+          >
+            <div
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: p.color,
+              }}
+            />
+            <span
+              style={{
+                color: "#64748b",
+                fontSize: 10,
+                fontWeight: 700,
+                fontFamily: "monospace",
+                textTransform: "uppercase",
+              }}
+            >
+              {p.dataKey}
+            </span>
+            <span
+              style={{
+                color: p.color,
+                fontSize: 16,
+                fontWeight: 900,
+                fontFamily: "monospace",
+                marginLeft: 4,
+              }}
+            >
+              {p.value}
+            </span>
           </div>
         ))}
       </div>
@@ -500,26 +709,50 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
   };
 
   const triggerStyle: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 6,
-    padding: '5px 12px', background: '#f8fafc', border: '1px solid #e2e8f0',
-    borderRadius: 8, cursor: 'pointer', fontSize: 9, fontWeight: 900,
-    color: '#334155', letterSpacing: '0.08em', textTransform: 'uppercase',
-    outline: 'none', transition: 'all 0.15s ease', whiteSpace: 'nowrap',
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    padding: "5px 12px",
+    background: "#f8fafc",
+    border: "1px solid #e2e8f0",
+    borderRadius: 8,
+    cursor: "pointer",
+    fontSize: 9,
+    fontWeight: 900,
+    color: "#334155",
+    letterSpacing: "0.08em",
+    textTransform: "uppercase",
+    outline: "none",
+    transition: "all 0.15s ease",
+    whiteSpace: "nowrap",
   };
   const menuStyle: React.CSSProperties = {
-    position: 'absolute', right: 0, top: 'calc(100% + 4px)',
-    background: '#fff', border: '1px solid #e2e8f0', borderRadius: 12,
-    boxShadow: '0 8px 32px rgba(0,0,0,0.12)', zIndex: 50, minWidth: 130,
-    overflow: 'hidden',
+    position: "absolute",
+    right: 0,
+    top: "calc(100% + 4px)",
+    background: "#fff",
+    border: "1px solid #e2e8f0",
+    borderRadius: 12,
+    boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+    zIndex: 50,
+    minWidth: 130,
+    overflow: "hidden",
   };
   const menuItemStyle = (active: boolean): React.CSSProperties => ({
-    display: 'block', width: '100%', textAlign: 'left',
-    padding: '9px 14px', border: 'none', cursor: 'pointer',
-    fontSize: 10, fontWeight: 800, letterSpacing: '0.06em',
-    textTransform: 'uppercase', transition: 'all 0.1s ease',
-    background: active ? '#fef2f2' : 'transparent',
-    color: active ? '#ef4444' : '#475569',
-    outline: 'none',
+    display: "block",
+    width: "100%",
+    textAlign: "left",
+    padding: "9px 14px",
+    border: "none",
+    cursor: "pointer",
+    fontSize: 10,
+    fontWeight: 800,
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    transition: "all 0.1s ease",
+    background: active ? "#fef2f2" : "transparent",
+    color: active ? "#ef4444" : "#475569",
+    outline: "none",
   });
 
   return (
@@ -569,87 +802,234 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
           <div
             key={i}
             style={{
-              background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16,
-              padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10,
-              boxShadow: '0 1px 8px rgba(0,0,0,0.06)', cursor: 'default',
-              transition: 'transform 0.15s ease, box-shadow 0.15s ease', outline: 'none',
+              background: "#ffffff",
+              border: "1px solid #e2e8f0",
+              borderRadius: 16,
+              padding: "16px 18px",
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              boxShadow: "0 1px 8px rgba(0,0,0,0.06)",
+              cursor: "default",
+              transition: "transform 0.15s ease, box-shadow 0.15s ease",
+              outline: "none",
             }}
-            onMouseEnter={e => {
-              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-2px)';
-              (e.currentTarget as HTMLDivElement).style.boxShadow = `0 8px 24px rgba(0,0,0,0.1), 0 0 0 1px ${stat.accent}33`;
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLDivElement).style.transform =
+                "translateY(-2px)";
+              (e.currentTarget as HTMLDivElement).style.boxShadow =
+                `0 8px 24px rgba(0,0,0,0.1), 0 0 0 1px ${stat.accent}33`;
             }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-              (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 8px rgba(0,0,0,0.06)';
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLDivElement).style.transform =
+                "translateY(0)";
+              (e.currentTarget as HTMLDivElement).style.boxShadow =
+                "0 1px 8px rgba(0,0,0,0.06)";
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 8, fontWeight: 900, color: '#94a3b8', letterSpacing: '0.1em', textTransform: 'uppercase', lineHeight: 1.3 }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 8,
+                  fontWeight: 900,
+                  color: "#94a3b8",
+                  letterSpacing: "0.1em",
+                  textTransform: "uppercase",
+                  lineHeight: 1.3,
+                }}
+              >
                 {stat.label}
               </span>
-              <div style={{ width: 26, height: 26, borderRadius: 8, background: stat.accent + '15', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginLeft: 6 }}>
-                <svg width="13" height="13" fill="none" stroke={stat.accent} strokeWidth="2.5" viewBox="0 0 24 24" style={{ outline: 'none' }}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d={stat.iconPath} />
+              <div
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: 8,
+                  background: stat.accent + "15",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                  marginLeft: 6,
+                }}
+              >
+                <svg
+                  width="13"
+                  height="13"
+                  fill="none"
+                  stroke={stat.accent}
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                  style={{ outline: "none" }}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d={stat.iconPath}
+                  />
                 </svg>
               </div>
             </div>
-            <span style={{ fontSize: 32, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em', lineHeight: 1 }}>
+            <span
+              style={{
+                fontSize: 32,
+                fontWeight: 900,
+                color: "#0f172a",
+                letterSpacing: "-0.02em",
+                lineHeight: 1,
+              }}
+            >
               {stat.value}
             </span>
-            <div style={{ height: 2, borderRadius: 99, background: `linear-gradient(90deg, ${stat.accent}, transparent)` }} />
+            <div
+              style={{
+                height: 2,
+                borderRadius: 99,
+                background: `linear-gradient(90deg, ${stat.accent}, transparent)`,
+              }}
+            />
           </div>
         ))}
       </div>
 
       {/* Chart Card */}
-      <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 20, padding: '18px 20px', boxShadow: '0 1px 12px rgba(0,0,0,0.06)', }}>
-
+      <div
+        style={{
+          background: "#ffffff",
+          border: "1px solid #e2e8f0",
+          borderRadius: 20,
+          padding: "18px 20px",
+          boxShadow: "0 1px 12px rgba(0,0,0,0.06)",
+        }}
+      >
         <div className="chart-header">
           {/* Legend */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-            {activeSeries.map(s => (
-              <span key={s.key} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <span style={{ width: 7, height: 7, borderRadius: '50%', background: s.color, display: 'inline-block', boxShadow: `0 0 5px ${s.color}` }} />
-                <span style={{ fontSize: 8, fontWeight: 900, color: s.color, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{s.label}</span>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              flexWrap: "wrap",
+            }}
+          >
+            {activeSeries.map((s) => (
+              <span
+                key={s.key}
+                style={{ display: "flex", alignItems: "center", gap: 4 }}
+              >
+                <span
+                  style={{
+                    width: 7,
+                    height: 7,
+                    borderRadius: "50%",
+                    background: s.color,
+                    display: "inline-block",
+                    boxShadow: `0 0 5px ${s.color}`,
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: 8,
+                    fontWeight: 900,
+                    color: s.color,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                  }}
+                >
+                  {s.label}
+                </span>
               </span>
             ))}
           </div>
 
           <div className="chart-controls">
             {/* Line / Bar icon toggle */}
-            <div style={{ display: 'flex', background: '#f1f5f9', borderRadius: 8, padding: 3, border: '1px solid #e2e8f0' }}>
-              {([
+            <div
+              style={{
+                display: "flex",
+                background: "#f1f5f9",
+                borderRadius: 8,
+                padding: 3,
+                border: "1px solid #e2e8f0",
+              }}
+            >
+              {[
                 {
-                  type: 'line' as ChartType,
+                  type: "line" as ChartType,
                   icon: (
-                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8" />
+                    <svg
+                      width="13"
+                      height="13"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M3 17l6-6 4 4 8-8"
+                      />
                     </svg>
                   ),
                 },
                 {
-                  type: 'bar' as ChartType,
+                  type: "bar" as ChartType,
                   icon: (
                     <svg width="13" height="13" viewBox="0 0 24 24">
-                      <rect x="3" y="12" width="4" height="9" rx="1" fill="currentColor" />
-                      <rect x="10" y="7" width="4" height="14" rx="1" fill="currentColor" />
-                      <rect x="17" y="3" width="4" height="18" rx="1" fill="currentColor" />
+                      <rect
+                        x="3"
+                        y="12"
+                        width="4"
+                        height="9"
+                        rx="1"
+                        fill="currentColor"
+                      />
+                      <rect
+                        x="10"
+                        y="7"
+                        width="4"
+                        height="14"
+                        rx="1"
+                        fill="currentColor"
+                      />
+                      <rect
+                        x="17"
+                        y="3"
+                        width="4"
+                        height="18"
+                        rx="1"
+                        fill="currentColor"
+                      />
                     </svg>
                   ),
                 },
-              ]).map(({ type, icon }) => (
+              ].map(({ type, icon }) => (
                 <button
                   key={type}
                   onClick={() => setChartType(type)}
-                  title={type === 'line' ? 'Line chart' : 'Bar chart'}
+                  title={type === "line" ? "Line chart" : "Bar chart"}
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    width: 28, height: 26,
-                    background: chartType === type ? '#ffffff' : 'transparent',
-                    border: 'none', borderRadius: 6, cursor: 'pointer',
-                    color: chartType === type ? '#ef4444' : '#94a3b8',
-                    outline: 'none', transition: 'all 0.15s ease',
-                    boxShadow: chartType === type ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 28,
+                    height: 26,
+                    background: chartType === type ? "#ffffff" : "transparent",
+                    border: "none",
+                    borderRadius: 6,
+                    cursor: "pointer",
+                    color: chartType === type ? "#ef4444" : "#94a3b8",
+                    outline: "none",
+                    transition: "all 0.15s ease",
+                    boxShadow:
+                      chartType === type ? "0 1px 4px rgba(0,0,0,0.1)" : "none",
                   }}
                 >
                   {icon}
@@ -659,17 +1039,40 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
 
             {/* Category dropdown */}
             <div className="dropdown-root">
-              <button style={triggerStyle} onClick={() => { setCategoryOpen(v => !v); setFilterOpen(false); }}>
-                {categoryOptions.find(c => c.value === category)?.label}
-                <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <button
+                style={triggerStyle}
+                onClick={() => {
+                  setCategoryOpen((v) => !v);
+                  setFilterOpen(false);
+                }}
+              >
+                {categoryOptions.find((c) => c.value === category)?.label}
+                <svg
+                  width="10"
+                  height="10"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
               {categoryOpen && (
                 <div style={menuStyle}>
-                  {categoryOptions.map(opt => (
-                    <button key={opt.value} style={menuItemStyle(category === opt.value)}
-                      onClick={() => { setCategory(opt.value); setCategoryOpen(false); }}>
+                  {categoryOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      style={menuItemStyle(category === opt.value)}
+                      onClick={() => {
+                        setCategory(opt.value);
+                        setCategoryOpen(false);
+                      }}
+                    >
                       {opt.label}
                     </button>
                   ))}
@@ -679,17 +1082,40 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
 
             {/* Date filter dropdown */}
             <div className="dropdown-root">
-              <button style={triggerStyle} onClick={() => { setFilterOpen(v => !v); setCategoryOpen(false); }}>
-                {filterOptions.find(f => f.value === filter)?.label}
-                <svg width="10" height="10" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              <button
+                style={triggerStyle}
+                onClick={() => {
+                  setFilterOpen((v) => !v);
+                  setCategoryOpen(false);
+                }}
+              >
+                {filterOptions.find((f) => f.value === filter)?.label}
+                <svg
+                  width="10"
+                  height="10"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
               </button>
               {filterOpen && (
                 <div style={menuStyle}>
-                  {filterOptions.map(opt => (
-                    <button key={opt.value} style={menuItemStyle(filter === opt.value)}
-                      onClick={() => { setFilter(opt.value); setFilterOpen(false); }}>
+                  {filterOptions.map((opt) => (
+                    <button
+                      key={opt.value}
+                      style={menuItemStyle(filter === opt.value)}
+                      onClick={() => {
+                        setFilter(opt.value);
+                        setFilterOpen(false);
+                      }}
+                    >
                       {opt.label}
                     </button>
                   ))}
@@ -698,8 +1124,13 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
             </div>
 
             {/* Export Trigger */}
-            <button 
-              style={{ ...triggerStyle, padding: '5px 8px', color: '#ef4444', borderColor: '#ef4444' }}
+            <button
+              style={{
+                ...triggerStyle,
+                padding: "5px 8px",
+                color: "#ef4444",
+                borderColor: "#ef4444",
+              }}
               onClick={() => {
                 if (dateRange.minISO && dateRange.maxISO) {
                   setExportFrom(dateRange.minISO);
@@ -715,32 +1146,101 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
         </div>
 
         {/* Chart */}
-        <div style={{ width: '100%', height: 220, minHeight: 220, overflow: 'hidden' }}>
+        <div
+          style={{
+            width: "100%",
+            height: 220,
+            minHeight: 220,
+            overflow: "hidden",
+          }}
+        >
           <ResponsiveContainer width="100%" height={220} minWidth={100}>
-            {chartType === 'bar' ? (
-              <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 800, fontFamily: 'monospace' }}
-                  dy={8} interval={tickInterval as any} />
+            {chartType === "bar" ? (
+              <BarChart
+                data={chartData}
+                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#f1f5f9"
+                />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{
+                    fill: "#94a3b8",
+                    fontSize: 9,
+                    fontWeight: 800,
+                    fontFamily: "monospace",
+                  }}
+                  dy={8}
+                  interval={tickInterval as any}
+                />
                 <YAxis hide allowDecimals={false} />
-                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f8fafc' }} />
-                {activeSeries.map(s => (
-                  <Bar key={s.key} dataKey={s.key} fill={s.color} radius={[3, 3, 0, 0]} maxBarSize={28} />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{ fill: "#f8fafc" }}
+                />
+                {activeSeries.map((s) => (
+                  <Bar
+                    key={s.key}
+                    dataKey={s.key}
+                    fill={s.color}
+                    radius={[3, 3, 0, 0]}
+                    maxBarSize={28}
+                  />
                 ))}
               </BarChart>
             ) : (
-              <LineChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false}
-                  tick={{ fill: '#94a3b8', fontSize: 9, fontWeight: 800, fontFamily: 'monospace' }}
-                  dy={8} interval={tickInterval as any} />
+              <LineChart
+                data={chartData}
+                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+              >
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#f1f5f9"
+                />
+                <XAxis
+                  dataKey="date"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{
+                    fill: "#94a3b8",
+                    fontSize: 9,
+                    fontWeight: 800,
+                    fontFamily: "monospace",
+                  }}
+                  dy={8}
+                  interval={tickInterval as any}
+                />
                 <YAxis hide allowDecimals={false} />
-                <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#e2e8f0', strokeWidth: 1, strokeDasharray: '4 4' }} />
-                {activeSeries.map(s => (
-                  <Line key={s.key} type="monotone" dataKey={s.key} stroke={s.color}
-                    strokeWidth={2.5} dot={false}
-                    activeDot={{ r: 5, fill: s.color, stroke: '#ffffff', strokeWidth: 2, style: { outline: 'none' } }} />
+                <Tooltip
+                  content={<CustomTooltip />}
+                  cursor={{
+                    stroke: "#e2e8f0",
+                    strokeWidth: 1,
+                    strokeDasharray: "4 4",
+                  }}
+                />
+                {activeSeries.map((s) => (
+                  <Line
+                    key={s.key}
+                    type="monotone"
+                    dataKey={s.key}
+                    stroke={s.color}
+                    strokeWidth={2.5}
+                    dot={false}
+                    activeDot={{
+                      r: 5,
+                      fill: s.color,
+                      stroke: "#ffffff",
+                      strokeWidth: 2,
+                      style: { outline: "none" },
+                    }}
+                  />
                 ))}
               </LineChart>
             )}
@@ -750,16 +1250,30 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
 
       {/* Export Modal */}
       {showExportModal && (
-        <div style={{
-          position: 'fixed', inset: 0, zIndex: 100,
-          background: 'rgba(15, 23, 42, 0.4)', backdropFilter: 'blur(8px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
-        }}>
-          <div style={{
-            background: '#fff', width: '100%', maxWidth: 450, borderRadius: 28,
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            border: '1px solid #e2e8f0', animation: 'modalScale 0.2s ease-out'
-          }}>
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 100,
+            background: "rgba(15, 23, 42, 0.4)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 20,
+          }}
+        >
+          <div
+            style={{
+              background: "#fff",
+              width: "100%",
+              maxWidth: 450,
+              borderRadius: 28,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              border: "1px solid #e2e8f0",
+              animation: "modalScale 0.2s ease-out",
+            }}
+          >
             <style>{`
               @keyframes modalScale { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
               .date-input {
@@ -794,38 +1308,86 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
                 cursor: pointer; width: 100%; height: 100%;
               }
             `}</style>
-            
-            <div style={{ padding: '24px 30px', borderBottom: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+            <div
+              style={{
+                padding: "24px 30px",
+                borderBottom: "1px solid #f1f5f9",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <div>
-                <h2 style={{ fontSize: 18, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em', margin: 0 }}>Export Leads</h2>
-                <p style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', margin: '4px 0 0', textTransform: 'uppercase' }}>Select date range to download CSV</p>
+                <h2
+                  style={{
+                    fontSize: 18,
+                    fontWeight: 900,
+                    color: "#0f172a",
+                    letterSpacing: "-0.02em",
+                    margin: 0,
+                  }}
+                >
+                  Export Leads
+                </h2>
+                <p
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 700,
+                    color: "#94a3b8",
+                    margin: "4px 0 0",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Select date range to download CSV
+                </p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowExportModal(false)}
-                style={{ padding: 8, borderRadius: 12, border: 'none', background: '#f8fafc', color: '#94a3b8', cursor: 'pointer', transition: 'all 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-                onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                style={{
+                  padding: 8,
+                  borderRadius: 12,
+                  border: "none",
+                  background: "#f8fafc",
+                  color: "#94a3b8",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = "#94a3b8")}
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div style={{ padding: '30px' }}>
+            <div style={{ padding: "30px" }}>
               <div style={{ marginBottom: 30 }}>
                 <label className="date-label">Date Range</label>
-                <div 
-                  className="custom-date-container" 
+                <div
+                  className="custom-date-container"
                   style={{ height: 56 }}
                   onClick={() => setActivePicker(!activePicker)}
                 >
-                  <div className="custom-date-display" style={{ borderColor: activePicker ? '#ef4444' : '#f1f5f9', borderRadius: 16 }}>
+                  <div
+                    className="custom-date-display"
+                    style={{
+                      borderColor: activePicker ? "#ef4444" : "#f1f5f9",
+                      borderRadius: 16,
+                    }}
+                  >
                     <span style={{ fontSize: 15 }}>
-                      {exportFrom ? toFullDecimalDate(exportFrom) : 'From'} — {exportTo ? toFullDecimalDate(exportTo) : 'To'}
+                      {exportFrom ? toFullDecimalDate(exportFrom) : "From"} —{" "}
+                      {exportTo ? toFullDecimalDate(exportTo) : "To"}
                     </span>
-                    <Calendar size={18} color={activePicker ? '#ef4444' : '#94a3b8'} strokeWidth={2.5} style={{ opacity: 0.8 }} />
+                    <Calendar
+                      size={18}
+                      color={activePicker ? "#ef4444" : "#94a3b8"}
+                      strokeWidth={2.5}
+                      style={{ opacity: 0.8 }}
+                    />
                   </div>
                   {activePicker && (
-                    <CustomCalendar 
+                    <CustomCalendar
                       startDate={exportFrom}
                       endDate={exportTo}
                       min={dateRange.minISO}
@@ -840,29 +1402,89 @@ const DashboardStats: React.FC<StatsProps> = ({ total, pending, called, rejected
                 </div>
               </div>
 
-              <div style={{ background: '#fef2f2', borderRadius: 16, padding: '16px 20px', display: 'flex', gap: 14, marginBottom: 30, border: '1px solid #fee2e2' }}>
-                <div style={{ width: 40, height: 40, borderRadius: 12, background: '#fff', border: '1px solid #fee2e2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <div
+                style={{
+                  background: "#fef2f2",
+                  borderRadius: 16,
+                  padding: "16px 20px",
+                  display: "flex",
+                  gap: 14,
+                  marginBottom: 30,
+                  border: "1px solid #fee2e2",
+                }}
+              >
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    background: "#fff",
+                    border: "1px solid #fee2e2",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
                   <Calendar size={18} color="#ef4444" strokeWidth={2.5} />
                 </div>
                 <div>
-                  <p style={{ fontSize: 11, fontWeight: 800, color: '#991b1b', margin: 0 }}>Available Range</p>
-                  <p style={{ fontSize: 10, fontWeight: 600, color: '#ef4444', margin: '2px 0 0' }}>
-                    {dateRange.min ? toFullDecimalDate(toISOKey(dateRange.min)) : 'N/A'} — {dateRange.max ? toFullDecimalDate(toISOKey(dateRange.max)) : 'N/A'}
+                  <p
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 800,
+                      color: "#991b1b",
+                      margin: 0,
+                    }}
+                  >
+                    Available Range
+                  </p>
+                  <p
+                    style={{
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: "#ef4444",
+                      margin: "2px 0 0",
+                    }}
+                  >
+                    {dateRange.min
+                      ? toFullDecimalDate(toISOKey(dateRange.min))
+                      : "N/A"}{" "}
+                    —{" "}
+                    {dateRange.max
+                      ? toFullDecimalDate(toISOKey(dateRange.max))
+                      : "N/A"}
                   </p>
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={handleExport}
                 style={{
-                  width: '100%', padding: '16px', borderRadius: 16, border: 'none',
-                  background: 'linear-gradient(135deg, #ef4444, #dc2626)', color: '#fff',
-                  fontSize: 12, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em',
-                  cursor: 'pointer', boxShadow: '0 10px 20px -5px rgba(239, 68, 68, 0.4)',
-                  transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
+                  width: "100%",
+                  padding: "16px",
+                  borderRadius: 16,
+                  border: "none",
+                  background: "linear-gradient(135deg, #ef4444, #dc2626)",
+                  color: "#fff",
+                  fontSize: 12,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.1em",
+                  cursor: "pointer",
+                  boxShadow: "0 10px 20px -5px rgba(239, 68, 68, 0.4)",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 10,
                 }}
-                onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
-                onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.transform = "translateY(-2px)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.transform = "translateY(0)")
+                }
               >
                 <Download size={16} />
                 Generate CSV Report

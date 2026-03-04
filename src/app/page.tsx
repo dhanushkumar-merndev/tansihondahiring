@@ -1,22 +1,22 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 
-import Image from 'next/image';
-import DashboardStats from '../components/DashboardStats';
-import LeadCard, { Lead } from '../components/LeadCard';
+import Image from "next/image";
+import DashboardStats from "../components/DashboardStats";
+import LeadCard, { Lead } from "../components/LeadCard";
 
 const Home = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('Pending');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("Pending");
   const [loading, setLoading] = useState(true);
-  const [lastRefreshed, setLastRefreshed] = useState<string>('');
+  const [lastRefreshed, setLastRefreshed] = useState<string>("");
 
   const fetchLeads = useCallback(async () => {
     try {
-      const res = await fetch('/api/leads');
+      const res = await fetch("/api/leads");
       const data = await res.json();
       if (Array.isArray(data)) {
         setLeads(data);
@@ -24,7 +24,7 @@ const Home = () => {
       setLastRefreshed(new Date().toLocaleTimeString());
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching leads:', error);
+      console.error("Error fetching leads:", error);
       setLoading(false);
     }
   }, []);
@@ -39,20 +39,14 @@ const Home = () => {
     let result = leads;
 
     // Status filter
-    if (statusFilter === 'Interested') {
+    if (statusFilter === "Interested") {
       result = result.filter(
-        (lead) => lead.status === 'Called' && lead.interested === 'Yes'
+        (lead) => lead.status === "Called" && lead.interested === "Yes",
       );
-    }
-    else if (statusFilter === 'In Process') {
-      result = result.filter(
-        (lead) => lead.inprocess === 'Yes'
-      );
-    }
-    else if (statusFilter !== 'All') {
-      result = result.filter(
-        (lead) => lead.status === statusFilter
-      );
+    } else if (statusFilter === "In Process") {
+      result = result.filter((lead) => lead.inprocess === "Yes");
+    } else if (statusFilter !== "All") {
+      result = result.filter((lead) => lead.status === statusFilter);
     }
 
     // Search filter
@@ -63,7 +57,7 @@ const Home = () => {
           lead.full_name.toLowerCase().includes(q) ||
           lead.position.toLowerCase().includes(q) ||
           lead.phone.includes(q) ||
-          lead.email.toLowerCase().includes(q)
+          lead.email.toLowerCase().includes(q),
       );
     }
 
@@ -75,21 +69,22 @@ const Home = () => {
 
   const stats = {
     total: leads.length,
-    pending: leads.filter((l) => l.status === 'Pending').length,
-    called: leads.filter((l) => l.status === 'Called').length,
-    rejected: leads.filter((l) => l.status === 'Rejected').length,
-    rawLeads: leads // Passing raw leads for chart data
+    pending: leads.filter((l) => l.status === "Pending").length,
+    rejected: leads.filter((l) => l.status === "Rejected").length,
+    inprocess: leads.filter((l) => l.inprocess === "Yes").length,
+    rawLeads: leads, // Passing raw leads for chart data
   };
   const tabCounts: Record<string, number> = {
     All: leads.length,
-    Pending: leads.filter((l) => l.status === 'Pending').length,
-    Called: leads.filter((l) => l.status === 'Called').length,
-    Rejected: leads.filter((l) => l.status === 'Rejected').length,
-    Interested: leads.filter((l) => l.status === 'Called' && l.interested === 'Yes').length,
-    'In Process': leads.filter((l) => l.inprocess === 'Yes').length,
+    Pending: leads.filter((l) => l.status === "Pending").length,
+    Rejected: leads.filter((l) => l.status === "Rejected").length,
+    Interested: leads.filter(
+      (l) => l.status === "Called" && l.interested === "Yes",
+    ).length,
+    "In Process": leads.filter((l) => l.inprocess === "Yes").length,
   };
 
-  const tabs = ['All', 'Pending', 'Called', 'Rejected', 'Interested', 'In Process'];
+  const tabs = ["All", "Pending", "Rejected", "Interested", "In Process"];
 
   const [showLeadsMobile, setShowLeadsMobile] = useState(false);
 
@@ -99,8 +94,9 @@ const Home = () => {
         {/* Compact Header */}
         <header className="bg-white rounded-2xl border border-slate-200 p-4 md:px-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div
-            className={`relative flex items-center w-full mb-4 ${showLeadsMobile ? "justify-center" : "justify-start"
-              }`}
+            className={`relative flex items-center w-full mb-4 ${
+              showLeadsMobile ? "justify-center" : "justify-start"
+            }`}
           >
             {/* Back Button (Left) */}
             {showLeadsMobile && (
@@ -144,7 +140,6 @@ const Home = () => {
                 </p>
               </div>
             </div>
-
           </div>
           <div className="flex items-center gap-3 w-full sm:w-auto -mt-4 md:mt-0">
             {/* Show search only on leads view on mobile, or always on desktop */}
@@ -156,16 +151,28 @@ const Home = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-sm text-red-600 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all font-medium"
               />
-              <svg className="absolute left-3 top-2.5 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              <svg
+                className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
               </svg>
             </div>
 
             <div className="flex items-center gap-2">
               <div className="text-right flex-col items-end flex">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter leading-none mb-0.5">Updated</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter leading-none mb-0.5">
+                  Updated
+                </p>
                 <p className="text-xs font-black text-slate-600 tabular-nums">
-                  {lastRefreshed || '--:--'}
+                  {lastRefreshed || "--:--"}
                 </p>
               </div>
               <button
@@ -173,11 +180,21 @@ const Home = () => {
                   setLoading(true);
                   fetchLeads();
                 }}
-                className={`p-2 rounded-xl bg-white border border-slate-200 shadow-sm hover:border-red-200 hover:bg-red-50 transition-all ${loading ? 'animate-pulse' : ''}`}
+                className={`p-2 rounded-xl bg-white border border-slate-200 shadow-sm hover:border-red-200 hover:bg-red-50 transition-all ${loading ? "animate-pulse" : ""}`}
                 title="Refresh"
               >
-                <svg className={`w-4 h-4 text-slate-500 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                <svg
+                  className={`w-4 h-4 text-slate-500 ${loading ? "animate-spin" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
                 </svg>
               </button>
             </div>
@@ -185,8 +202,11 @@ const Home = () => {
         </header>
 
         {/* Dashboard View (Stats + Graph) */}
-        <div className={showLeadsMobile ? 'hidden sm:block' : 'block'}>
-          <div className="-mt-2.5 md:-mt-1"> <DashboardStats {...stats} /></div>
+        <div className={showLeadsMobile ? "hidden sm:block" : "block"}>
+          <div className="-mt-2.5 md:-mt-1">
+            {" "}
+            <DashboardStats {...stats} />
+          </div>
 
           <div className="mt-4 -mb-4 sm:hidden">
             <button
@@ -194,31 +214,45 @@ const Home = () => {
               className="w-full py-4 bg-red-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl"
             >
               See All Applications
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                />
               </svg>
             </button>
           </div>
         </div>
 
         {/* Leads List View */}
-        <div className={showLeadsMobile ? 'block' : 'hidden sm:block'}>
+        <div className={showLeadsMobile ? "block" : "hidden sm:block"}>
           {/* Compact Filters */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 mb-4">
             {tabs.map((tab) => (
               <button
                 key={tab}
                 onClick={() => setStatusFilter(tab)}
-                className={`px-5 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap flex items-center gap-2 ${statusFilter === tab
-                  ? 'bg-red-600 text-white shadow-lg shadow-red-100'
-                  : 'bg-white text-slate-500 border border-slate-200 hover:border-red-200 hover:bg-red-50/50'
-                  }`}
+                className={`px-5 py-2 rounded-xl text-xs font-black transition-all duration-150 whitespace-nowrap flex items-center gap-2 ${
+                  statusFilter === tab
+                    ? "bg-red-600 text-white shadow-lg shadow-red-100"
+                    : "bg-white text-slate-500 border border-slate-200 hover:border-red-200 hover:bg-red-50/50"
+                }`}
               >
                 {tab}
-                <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${statusFilter === tab
-                  ? 'bg-white/20 text-white'
-                  : 'bg-slate-100 text-slate-500'
-                  }`}>
+                <span
+                  className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+                    statusFilter === tab
+                      ? "bg-white/20 text-white"
+                      : "bg-slate-100 text-slate-500"
+                  }`}
+                >
                   {tabCounts[tab]}
                 </span>
               </button>
@@ -231,22 +265,42 @@ const Home = () => {
           {loading && leads.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-3xl border border-slate-200 border-dashed">
               <div className="w-12 h-12 rounded-full border-4 border-slate-100 border-t-red-600 animate-spin mb-4"></div>
-              <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">Processing Data...</p>
+              <p className="text-sm font-bold text-slate-600 uppercase tracking-widest">
+                Processing Data...
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {filteredLeads.map((lead) => (
-                <LeadCard key={lead.rowIndex} lead={lead} onRefresh={fetchLeads} />
+                <LeadCard
+                  key={lead.rowIndex}
+                  lead={lead}
+                  onRefresh={fetchLeads}
+                />
               ))}
               {filteredLeads.length === 0 && (
                 <div className="col-span-full bg-white rounded-3xl border border-slate-200 border-dashed p-16 text-center shadow-sm">
                   <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-100">
-                    <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <svg
+                      className="w-8 h-8 text-slate-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-black text-slate-800 mb-1">No matches found</h3>
-                  <p className="text-sm text-slate-400 font-medium">Try adjusting your search or filters.</p>
+                  <h3 className="text-xl font-black text-slate-800 mb-1">
+                    No matches found
+                  </h3>
+                  <p className="text-sm text-slate-400 font-medium">
+                    Try adjusting your search or filters.
+                  </p>
                 </div>
               )}
             </div>
