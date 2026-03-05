@@ -13,7 +13,6 @@ interface DashboardClientProps {
 
 const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
   const [leads, setLeads] = useState<Lead[]>(initialLeads);
-  const [filteredLeads, setFilteredLeads] = useState<Lead[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("Pending");
   const [loading, setLoading] = useState(false);
@@ -21,7 +20,7 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
 
   const fetchLeads = useCallback(async () => {
     try {
-      const res = await fetch("/api/leads");
+      const res = await fetch("/api/leads", { cache: "no-store" });
       const data = await res.json();
       if (Array.isArray(data)) {
         setLeads(data);
@@ -38,18 +37,19 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
     // Set initial refresh time
     setLastRefreshed(new Date().toLocaleTimeString());
 
-    // Setup interval for subsequent updates
-    const interval = setInterval(fetchLeads, 30000);
+    // Setup interval for subsequent updates (10 minutes)
+    const interval = setInterval(fetchLeads, 600000);
     return () => clearInterval(interval);
   }, [fetchLeads]);
 
-  useEffect(() => {
+  const filteredLeads = React.useMemo(() => {
     let result = leads;
 
     // Status filter
     if (statusFilter === "Interested + Called") {
       result = result.filter(
-        (lead) => lead.status === "Called" && lead.interested === "Yes",
+        (lead) =>
+          lead.status.toLowerCase() === "called" && lead.interested === "Yes",
       );
     } else if (statusFilter === "In Process") {
       result = result.filter((lead) => lead.inprocess === "Yes");
@@ -70,9 +70,7 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
     }
 
     // Sort by rowIndex ascending (First Come, First Served)
-    result = [...result].sort((a, b) => a.rowIndex - b.rowIndex);
-
-    setFilteredLeads(result);
+    return [...result].sort((a, b) => a.rowIndex - b.rowIndex);
   }, [leads, statusFilter, searchQuery]);
 
   const stats = {
@@ -251,6 +249,10 @@ const DashboardClient: React.FC<DashboardClientProps> = ({ initialLeads }) => {
                   key={lead.rowIndex}
                   lead={lead}
                   onRefresh={fetchLeads}
+                  hideCalledBadge={
+                    statusFilter === "Interested + Called" ||
+                    statusFilter === "In Process"
+                  }
                 />
               ))}
               {filteredLeads.length === 0 && (

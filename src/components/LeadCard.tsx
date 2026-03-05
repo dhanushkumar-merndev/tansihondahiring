@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 
 export interface Lead {
   rowIndex: number;
@@ -49,9 +49,14 @@ const formatDate = (date: Date) => {
 interface LeadCardProps {
   lead: Lead;
   onRefresh: () => void;
+  hideCalledBadge?: boolean;
 }
 
-const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
+const LeadCard: React.FC<LeadCardProps> = ({
+  lead,
+  onRefresh,
+  hideCalledBadge,
+}) => {
   const [feedback, setFeedback] = useState(lead.feedback || "");
   const [selectedStatus, setSelectedStatus] = useState(lead.status);
   const [selectedInterested, setSelectedInterested] = useState(
@@ -60,6 +65,32 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
   const [inProcess, setInProcess] = useState<string | "">(lead.inprocess || "");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [justSaved, setJustSaved] = useState(false);
+
+  const prevLeadRef = useRef(lead);
+
+  // Sync local state when lead prop changes (Soft Sync)
+  React.useEffect(() => {
+    const prevLead = prevLeadRef.current;
+
+    // Only update if local state hasn't been modified by user (matches previous prop)
+    // or if we just performed a save on THIS card.
+    if (justSaved || feedback === (prevLead.feedback || "")) {
+      setFeedback(lead.feedback || "");
+    }
+    if (justSaved || selectedStatus === prevLead.status) {
+      setSelectedStatus(lead.status);
+    }
+    if (justSaved || selectedInterested === (prevLead.interested || "")) {
+      setSelectedInterested(lead.interested || "");
+    }
+    if (justSaved || inProcess === (prevLead.inprocess || "")) {
+      setInProcess(lead.inprocess || "");
+    }
+
+    setJustSaved(false);
+    prevLeadRef.current = lead;
+  }, [lead]);
 
   const handleSave = async () => {
     if (!feedback.trim()) {
@@ -67,13 +98,12 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
       return;
     }
 
-    if (!selectedStatus || selectedStatus === "Pending") {
-      setError("Select Called or Reject");
-      return;
-    }
-
     setError(null);
     setIsSaving(true);
+
+    // Optimistic update is already handled by the local state
+    // being controlled by the user's interactions before Save.
+    // However, we want to ensure the UI feels "saved" immediately.
 
     try {
       const res = await fetch("/api/leads", {
@@ -90,9 +120,12 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
       });
 
       if (res.ok) {
+        setJustSaved(true);
+        // Refresh parent to sync with "source of truth"
         onRefresh();
       } else {
         setError("Failed to save to Google Sheets");
+        // Optional: rollback if we strictly followed an optimistic pattern
       }
     } catch (err) {
       console.error(err);
@@ -104,45 +137,61 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
 
   const statusColors: { [key: string]: string } = {
     Pending: "bg-red-50 text-red-600 border-red-100",
-    Called: "bg-white text-red-600 border-red-600",
     Rejected: "bg-red-600 text-white border-red-600",
+    Called: "bg-blue-50 text-blue-600 border-blue-100",
   };
+
+  const isStatusCalled =
+    lead.status.toLowerCase() === "called" ||
+    selectedStatus.toLowerCase() === "called";
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-5 flex flex-col h-full transition-all hover:shadow-md hover:border-red-200 group">
       {/* Header */}
-      <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-black text-slate-900 leading-tight uppercase group-hover:text-red-600 transition-colors">
+      <div className="flex justify-between items-start mb-4 gap-4">
+        <div className="min-w-0 flex-1">
+          <h3
+            className="text-lg font-black text-slate-900 leading-tight uppercase group-hover:text-red-600 transition-colors truncate"
+            title={lead.full_name}
+          >
             {lead.full_name}
           </h3>
-          <p className="text-[10px] font-black text-red-600 mt-1.5 uppercase tracking-widest">
+          <p className="text-[10px] font-black text-red-600 mt-1.5 uppercase tracking-widest truncate">
             {lead.position}
           </p>
         </div>
 
-        <div className="flex flex-col items-end gap-1.5">
-          <span
-            className={`flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border transition-colors shadow-sm ${
-              statusColors[selectedStatus] || "bg-slate-50 text-slate-600"
-            }`}
-          >
-            {selectedStatus}
-          </span>
-
-          {selectedInterested && (
-            <span
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-                selectedInterested === "Yes"
-                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
-                  : "bg-slate-50 text-slate-400 border-slate-100"
-              }`}
-            >
-              {selectedInterested === "Yes"
-                ? "✓ INTERESTED"
-                : "✗ NOT INTERESTED"}
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          {inProcess === "Yes" && (
+            <span className="flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border transition-colors shadow-sm bg-purple-50 text-purple-600 border-purple-100">
+              In Process
             </span>
           )}
+
+          {!(isStatusCalled && (hideCalledBadge || inProcess === "Yes")) && (
+            <span
+              className={`flex items-center px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.15em] border transition-colors shadow-sm ${
+                statusColors[selectedStatus] || "bg-slate-50 text-slate-600"
+              }`}
+            >
+              {selectedStatus}
+            </span>
+          )}
+
+          {selectedInterested &&
+            !(selectedStatus === "Rejected" || selectedStatus === "Reject") && (
+              <span
+                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                  selectedInterested === "Yes"
+                    ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                    : "bg-slate-50 text-slate-400 border-slate-100"
+                }`}
+              >
+                {selectedInterested === "Yes"
+                  ? "✓ INTERESTED"
+                  : "✗ NOT INTERESTED"}
+              </span>
+            )}
         </div>
       </div>
 
@@ -242,10 +291,14 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
           <div className="flex gap-1.5 flex-1">
             {["INTERESTED", "NOT INTERESTED"].map((opt) => {
               const value = opt === "INTERESTED" ? "Yes" : "No";
+              const isDisabled =
+                (opt === "INTERESTED" && selectedStatus === "Reject") ||
+                (opt === "NOT INTERESTED" && inProcess === "Yes");
 
               return (
                 <button
                   key={opt}
+                  disabled={isDisabled}
                   onClick={() =>
                     setSelectedInterested((prev) =>
                       prev === value ? "" : value,
@@ -256,7 +309,9 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
                       ? value === "Yes"
                         ? "bg-emerald-50 text-emerald-600 border-emerald-400 scale-[1.02] shadow-sm"
                         : "bg-red-50 text-red-600 border-red-400 scale-[1.02] shadow-sm"
-                      : "bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100"
+                      : isDisabled
+                        ? "bg-slate-100 text-slate-300 border-slate-100 cursor-not-allowed opacity-60"
+                        : "bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100"
                   }`}
                 >
                   {opt}
@@ -269,9 +324,22 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
         {/* Status Buttons */}
         <div className="grid grid-cols-2 gap-2">
           <button
-            onClick={() =>
-              setInProcess((prev) => (prev === "Yes" ? "" : "Yes"))
-            }
+            onClick={() => {
+              setInProcess((prev) => {
+                const newValue = prev === "Yes" ? "" : "Yes";
+                if (newValue === "Yes") {
+                  setSelectedStatus("Called");
+                  // Clear NOT INTERESTED if it was selected
+                  setSelectedInterested((curr) => (curr === "No" ? "" : curr));
+                } else {
+                  // If deselected, reset to Pending if it was Called
+                  setSelectedStatus((current) =>
+                    current === "Called" ? "Pending" : current,
+                  );
+                }
+                return newValue;
+              });
+            }}
             className={`w-full py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg border transition-all ${
               inProcess === "Yes"
                 ? "bg-white text-red-600 border-red-500 shadow-sm scale-[1.02]"
@@ -283,14 +351,21 @@ const LeadCard: React.FC<LeadCardProps> = ({ lead, onRefresh }) => {
 
           <button
             key="Reject"
-            onClick={() =>
-              setSelectedStatus((prev) =>
-                prev === "Reject" ? "Pending" : "Reject",
-              )
-            }
+            onClick={() => {
+              setSelectedStatus((prev) => {
+                const isRejecting = prev !== "Reject";
+                if (isRejecting) {
+                  setInProcess(""); // Clear In Process when Rejecting
+                  // Only deselect if it was "Yes"
+                  setSelectedInterested((curr) => (curr === "Yes" ? "" : curr));
+                  return "Reject";
+                }
+                return "Pending";
+              });
+            }}
             className={`py-2 text-[10px] font-black uppercase tracking-widest rounded-xl border transition-all ${
               selectedStatus === "Reject"
-                ? "bg-white text-red-600 border-red-500 shadow-sm"
+                ? "bg-red-600 text-white border-red-600 shadow-lg scale-[1.02]"
                 : "bg-slate-50 text-slate-400 border-slate-100 hover:bg-slate-100"
             }`}
           >
